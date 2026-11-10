@@ -160,7 +160,7 @@ Cada termo tem este sentido único em toda a spec.
 - **RN40** — Em toda devolução, parcial ou completa, o dono informa o estado de conservação do objeto naquele momento (obrigatório) e pode anexar uma foto (opcional). Esse estado passa a ser o estado atual do objeto.
 - **RN41** — Objeto com itens: ao registrar o empréstimo, todos os itens ativos do objeto saem com ele (não há escolha de itens) e o app os guarda em ItemEmprestado. Na devolução, o dono marca quais itens pendentes voltaram (pelo menos 1). Se ainda faltar algum, a devolução é parcial. Objeto sem itens: a devolução é sempre completa.
 - **RN42** — Devolução parcial em empréstimo Ativo leva a Devolvido parcialmente. Devolução parcial em empréstimo Atrasado mantém Atrasado. A devolução que faz voltar o último item pendente leva a Devolvido.
-- **RN43** — Um empréstimo Devolvido parcialmente continua contando prazo, tolerância, atraso e avisos (RN22 a RN30). A tela do empréstimo lista os itens pendentes, e os avisos das RN26 e RN27 terminam com " Itens pendentes: <item>, <item>."
+- **RN43** — Um empréstimo Devolvido parcialmente continua contando prazo, tolerância, atraso e avisos (RN21 a RN30). A tela do empréstimo lista os itens pendentes, e os avisos das RN26 e RN27 terminam com " Itens pendentes: <item>, <item>."
 - **RN44** — O estado na volta é o informado na última devolução registrada no empréstimo (a de criado_em mais recente). Há dano quando o número do estado na volta é maior que o do estado na saída (RN07).
 - **RN45** — O dano é avaliado só na devolução que leva o empréstimo a Devolvido (completa ou por reaparecimento). Se houver dano, o dono escolhe nessa hora um desfecho (obrigatório): Sem ação, Reparo combinado ou Reposição combinada. Depois, só em empréstimo Devolvido, pode trocá-lo por qualquer um dos quatro, inclusive Resolvido; o desfecho nunca fica vazio. Devoluções parciais e empréstimos Perdidos não têm desfecho. O app não registra valores em dinheiro.
 - **RN46** — O dono pode registrar uma contestação, só em empréstimo Devolvido com dano: texto de 1 a 500 caracteres, no máximo uma por empréstimo, editável. A contestação não altera o estado na volta, o dano nem o desfecho.
@@ -220,7 +220,7 @@ Nos cenários, as datas são exemplos concretos; "hoje é 10/03/2027" fixa o dia
 ### HU01 — Cadastrar objeto
 
 Como dono, quero cadastrar um objeto, para poder emprestá-lo depois.
-Regras relacionadas: RN03, RN04, RN05, RN06, RN07, RN11
+Regras relacionadas: RN03, RN04, RN05, RN06, RN07, RN08, RN11, RN74
 
 Critérios de aceite:
 - Cenário: cadastro válido
@@ -255,7 +255,7 @@ Critérios de aceite:
 ### HU02 — Cadastrar amigo
 
 Como dono, quero cadastrar um amigo, para registrar a quem emprestei.
-Regras relacionadas: RN03, RN12, RN13, RN61
+Regras relacionadas: RN03, RN12, RN13, RN61, RN74
 
 Critérios de aceite:
 - Cenário: cadastro só com nome
@@ -279,7 +279,7 @@ Critérios de aceite:
 ### HU03 — Registrar empréstimo
 
 Como dono, quero registrar que emprestei um objeto, para saber com quem ele está e até quando.
-Regras relacionadas: RN09, RN10, RN14, RN15, RN16, RN17, RN18, RN19, RN24, RN38
+Regras relacionadas: RN08, RN09, RN10, RN14, RN15, RN16, RN17, RN18, RN19, RN24, RN38, RN73, RN74
 
 Critérios de aceite:
 - Cenário: prazo padrão da categoria
@@ -328,7 +328,7 @@ Critérios de aceite:
 ### HU04 — Renovar empréstimo
 
 Como dono, quero adiar a data prevista quando o amigo pede mais tempo, para que os avisos passem a usar a nova data.
-Regras relacionadas: RN19, RN20, RN29, RN32, RN33, RN34, RN35, RN36, RN37
+Regras relacionadas: RN19, RN20, RN26, RN29, RN32, RN33, RN34, RN35, RN36, RN37, RN74
 
 Critérios de aceite:
 - Cenário: renovação a partir do prazo anterior
@@ -364,7 +364,7 @@ Critérios de aceite:
 ### HU05 — Registrar devolução
 
 Como dono, quero registrar a volta do objeto e o estado em que ele voltou, para comparar com a saída.
-Regras relacionadas: RN39, RN40, RN41, RN42, RN43, RN44, RN45, RN47
+Regras relacionadas: RN08, RN22, RN39, RN40, RN41, RN42, RN43, RN44, RN45, RN47, RN68, RN73
 
 Critérios de aceite:
 - Cenário: devolução sem dano
@@ -408,7 +408,7 @@ Critérios de aceite:
 ### HU06 — Acompanhar desfecho e contestação do dano
 
 Como dono, quero registrar o que combinei com o amigo e se ele discorda, para ter tudo no histórico.
-Regras relacionadas: RN45, RN46
+Regras relacionadas: RN45, RN46, RN74
 
 Critérios de aceite:
 - Cenário: resolver o dano
@@ -431,7 +431,7 @@ Critérios de aceite:
 ### HU07 — Registrar perda e reaparecimento
 
 Como dono, quero marcar um objeto como perdido e, se ele aparecer, registrar a volta.
-Regras relacionadas: RN25, RN48, RN49, RN50, RN51, RN52
+Regras relacionadas: RN08, RN25, RN45, RN48, RN49, RN50, RN51, RN52, RN69
 
 Critérios de aceite:
 - Cenário: perda sem itens devolvidos
@@ -449,7 +449,7 @@ Critérios de aceite:
   Então vejo "Atrasado há 60 dias. Marcar como perdido?"
   E o empréstimo continua Atrasado até eu confirmar
 - Cenário: objeto reapareceu
-  Dado que hoje é 20/03/2027 e a "Serra Tico-Tico", que saiu com estado "Bom", está Perdida (perda em 10/03/2027) e arquivada
+  Dado que hoje é 20/03/2027 e a "Serra Tico-Tico", que saiu com estado "Bom", está na situação "Perdido" (perda em 10/03/2027) e arquivada
   Quando escolho "Objeto reapareceu", informo o estado "Desgastado" e o desfecho "Sem ação"
   Então o empréstimo fica Devolvido, marcado "Com dano", com encerramento em 20/03/2027, e o histórico mostra "Perda em 10/03/2027 (perda revertida)"
   E a serra é desarquivada e fica "Disponível"
@@ -461,7 +461,7 @@ Critérios de aceite:
 ### HU08 — Listar empréstimos
 
 Como dono, quero ver os empréstimos separados em ativos, atrasados e encerrados, para saber o que cobrar.
-Regras relacionadas: RN22, RN23, RN67, RN68
+Regras relacionadas: RN22, RN23, RN67, RN68, RN73
 
 Critérios de aceite:
 - Cenário: ordem dos ativos
@@ -488,7 +488,7 @@ Critérios de aceite:
 ### HU09 — Receber avisos
 
 Como dono, quero ser avisado antes do prazo e durante o atraso, para não esquecer de cobrar.
-Regras relacionadas: RN26, RN27, RN28, RN29, RN30, RN31, RN43
+Regras relacionadas: RN26, RN27, RN28, RN29, RN30, RN31, RN43, RN73
 
 Critérios de aceite:
 - Cenário: avisos antes do prazo
@@ -533,7 +533,7 @@ Critérios de aceite:
 ### HU10 — Consultar histórico
 
 Como dono, quero ver o histórico de um objeto e de um amigo, para saber como foram os empréstimos.
-Regras relacionadas: RN69, RN70
+Regras relacionadas: RN65, RN69, RN70, RN73
 
 Critérios de aceite:
 - Cenário: histórico do objeto
@@ -552,7 +552,7 @@ Critérios de aceite:
 ### HU11 — Bloquear amigo
 
 Como dono, quero bloquear um amigo que não cuida das coisas, para não emprestar de novo sem perceber.
-Regras relacionadas: RN14, RN53, RN54, RN55, RN56
+Regras relacionadas: RN14, RN26, RN53, RN54, RN55, RN56, RN73
 
 Critérios de aceite:
 - Cenário: bloqueio manual
@@ -587,7 +587,7 @@ Critérios de aceite:
 ### HU12 — Arquivar e excluir
 
 Como dono, quero tirar da lista o que não uso mais sem perder o histórico.
-Regras relacionadas: RN57, RN58, RN59, RN60, RN75
+Regras relacionadas: RN08, RN57, RN58, RN59, RN60, RN75
 
 Critérios de aceite:
 - Cenário: excluir sem histórico
@@ -619,7 +619,7 @@ Critérios de aceite:
 ### HU13 — Remover dados pessoais do amigo
 
 Como dono, quero apagar os dados de um amigo que pediu, para cumprir a LGPD sem estragar o histórico dos objetos.
-Regras relacionadas: RN61, RN63, RN64, RN65, RN66
+Regras relacionadas: RN57, RN61, RN63, RN64, RN65, RN66, RN69
 
 Critérios de aceite:
 - Cenário: remoção com histórico
@@ -872,7 +872,7 @@ Relações: Objeto 1—N Emprestimo; Amigo 1—N Emprestimo; Emprestimo 1—N Re
 |---|---|---|---|
 | D01 | Amigo é só contato, sem conta (IA) | Amigo também usa o app | Não depende de o amigo instalar nada; evita login, convite e permissões, e a spec fica do tamanho do problema |
 | D02 | Prazo informado em dias ou data; grava-se a data (IA) | Só dias; só data | Dá liberdade ao dono e mantém uma única fonte de verdade para os cálculos |
-| D03 | Prazo padrão por categoria, de 1 a 90 dias, e "sem prazo" permitido | Padrão único; sem "sem prazo" | Uma ferramenta volta mais rápido que um livro; e há empréstimos reais sem data (ex.: livro para um parente) |
+| D03 | Prazo padrão por categoria, de 1 a 90 dias, e "sem prazo" permitido | Padrão único; sem "sem prazo" | Uma ferramenta volta mais cedo que um livro; e há empréstimos reais sem data (ex.: livro para um parente) |
 | D04 | Vence às 23:59:59 no fuso do aparelho (IA) | Horário de Brasília fixo; início do dia | "Até dia 17" significa o dia 17 inteiro para qualquer pessoa; o fuso do aparelho é o que o dono vive |
 | D05 | Tolerância de 3 dias antes de Atrasado | Sem tolerância; 1 dia | Evita tratar como atraso o amigo que devolve no fim de semana seguinte |
 | D06 | Atraso gera aviso e alerta ao emprestar, sem bloqueio (IA) | Bloqueio automático; pontuação | O dono conhece o amigo e decide; o bloqueio fica como decisão manual (D20) |

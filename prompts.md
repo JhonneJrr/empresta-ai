@@ -83,3 +83,10 @@ As correções que exigiram decisão nova estão registradas como premissas P14 
 **Prompt:** o mesmo da P05, num agente novo que não viu a conferência anterior.
 
 **Resultado:** todas as perguntas obrigatórias respondidas, com 10 problemas apontados e conferidos no texto. Exemplos: "Perdido" chamado de estado final apesar do reaparecimento, termos da situação do objeto sem definição no glossário, devoluções do mesmo dia sem ordem, regras sem cenário Dado/Quando/Então (reativar avisos, itens pendentes no aviso, avisos após renovação, lista Encerrados) e limites numéricos sem registro na seção 11. Todos foram corrigidos; as decisões novas estão nas premissas P31 a P33.
+
+## P07 — Polimento final
+**Prompt (redação revisada do pedido feito na conversa):**
+> Faça um polimento final da spec sem criar nem mudar regras: corrija ortografia, referências cruzadas entre RN, HU, D e P, termos que divergem do glossário, mensagens com redação diferente entre seções, palavras vagas, tabelas quebradas e contas de data nos cenários. Liste à parte o que só se resolve com decisão nova.
+
+**Onde:** Claude, num agente separado.
+**Resultado:** 16 ajustes, quase todos nas listas "Regras relacionadas" das HUs, que passaram a citar todas as RNs que os cenários testam. Nenhum ponto precisou de decisão nova. Todas as contas de data conferiram.
