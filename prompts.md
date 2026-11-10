@@ -68,3 +68,13 @@ A IA fez perguntas de múltipla escolha, com uma opção marcada como recomendad
 | Detalhe de interface ou de implementação → fora da spec | 16 | Quantas notificações locais agendar de uma vez; ordem de leitura do leitor de tela; busca e paginação das listas; o que fazer se o armazenamento encher ao exportar |
 
 As correções que exigiram decisão nova estão registradas como premissas P14 a P22 na seção 11 da spec.
+
+**Prompt de correção (redação revisada do pedido feito na conversa):**
+> Aplique na spec só as perguntas que são lacunas reais ou contradições. Descarte as que a spec já responde e as que são detalhe de interface ou de implementação. Registre como premissa toda decisão nova que a correção exigir.
+
+## P05 — Conferência final com o enunciado
+**Prompt (redação revisada do pedido feito na conversa):**
+> Confira se a entrega cumpre tudo o que o enunciado pede: entregáveis, seções do template, escopo, cada pergunta obrigatória, regras de uso de IA e cada critério da rubrica. Liste só o que precisa ser corrigido, com a citação literal do trecho. Depois, corrija os problemas confirmados.
+
+**Onde:** Claude, num agente separado que recebeu só o PDF do enunciado, o `spec.md` e o `prompts.md`.
+**Resultado:** todos os requisitos atendidos, com 12 problemas apontados e conferidos no texto. Exemplos: regras sem registro na seção 11, objeto que fica com 1 item depois de uma perda, empréstimo excluído sem cancelar os avisos, critério de backup válido indefinido e palavras vagas ("normalmente"). Todos foram corrigidos; as decisões novas estão nas premissas P23 a P30.
