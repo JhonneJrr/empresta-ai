@@ -78,3 +78,8 @@ As correções que exigiram decisão nova estão registradas como premissas P14 
 
 **Onde:** Claude, num agente separado que recebeu só o PDF do enunciado, o `spec.md` e o `prompts.md`.
 **Resultado:** todos os requisitos atendidos, com 12 problemas apontados e conferidos no texto. Exemplos: regras sem registro na seção 11, objeto que fica com 1 item depois de uma perda, empréstimo excluído sem cancelar os avisos, critério de backup válido indefinido e palavras vagas ("normalmente"). Todos foram corrigidos; as decisões novas estão nas premissas P23 a P30.
+
+## P06 — Segunda conferência com o enunciado
+**Prompt:** o mesmo da P05, num agente novo que não viu a conferência anterior.
+
+**Resultado:** todas as perguntas obrigatórias respondidas, com 10 problemas apontados e conferidos no texto. Exemplos: "Perdido" chamado de estado final apesar do reaparecimento, termos da situação do objeto sem definição no glossário, devoluções do mesmo dia sem ordem, regras sem cenário Dado/Quando/Então (reativar avisos, itens pendentes no aviso, avisos após renovação, lista Encerrados) e limites numéricos sem registro na seção 11. Todos foram corrigidos; as decisões novas estão nas premissas P31 a P33.
