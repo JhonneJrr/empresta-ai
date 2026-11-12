@@ -105,3 +105,19 @@ As correções que exigiram decisão nova estão registradas como premissas P14 
 | Corte de MVP | Ficam para a v2: itens e devolução parcial, reaparecimento, sugestão automática de bloqueio e backup (D24) | A IA listou os candidatos; a escolha dos quatro é minha |
 | Decisões da IA que mudei | D07 (aviso 1 dia antes, não 2), D08 (avisos de atraso diários na 1ª semana), D09 (1 renovação, não 2), D16 (sugerir perda aos 30 dias, não 60) | Eram as sugestões originais da IA, aceitas na entrevista |
 | Questões em aberto | A seção 12 deixou de dizer "Nenhuma" e lista 7 limites e dúvidas | — |
+
+## P09 — Análise de furos antes do protótipo (12/11/2026)
+**Prompt (redação revisada do pedido feito na conversa):**
+> Antes de começar o protótipo, analise os furos que ainda existem na spec revisada: contradições entre regras, casos do "pior amigo" que escapam, regras do MVP que dependem de regra marcada [v2] e lacunas que um implementador teria de adivinhar. Não reabra as minhas decisões; aponte só furo real, com o trecho citado, e diga quais valem ser corrigidos antes do protótipo.
+
+**Onde:** Claude, em dois agentes separados com papéis opostos (um avalia o rigor, o outro ataca a spec), e uma síntese das duas leituras.
+**Resultado:** os dois concordaram que o MVP ainda dependia de regras marcadas [v2] (a devolução completa só estava definida em regras da v2). O agente que atacou a spec achou três furos de produto. As decisões foram minhas:
+
+| Furo | Minha decisão | O que a IA recomendava |
+|---|---|---|
+| Amigo com dano pendente pedia a remoção de dados e sumia do histórico | Remoção bloqueada enquanto houver dano em "Reparo combinado" ou "Reposição combinada" (D27) | Permitir, só com aviso ao dono. Recusei: o dono precisa saber com quem combinou o conserto |
+| No MVP, quem perdeu ou danificou um objeto recebia outro empréstimo sem alerta | O alerta ao emprestar cita também perdas e danos dos últimos 12 meses (D28) | A mesma. Aceitei |
+| Protótipo: MVP ou spec inteira | Só o MVP | A mesma. Aceitei |
+| Demais correções (devolução completa com regra própria no MVP, marcas [v2] que faltavam, amigo excluído na lista de remoções, prioridade dos avisos de prazo, dias de atraso nunca abaixo de 1) | Aplicar todas (P35 a P37) | A mesma. Aceitei |
+
+Os limites que não foram resolvidos entraram na seção 12 (itens 8 e 9).

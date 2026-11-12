@@ -14,8 +14,8 @@ Quem empresta livros, ferramentas e jogos costuma esquecer o que emprestou, para
 2. Cadastrar amigos (contatos do dono).
 3. Registrar um empréstimo com data de saída e prazo de devolução, ou sem prazo.
 4. Renovar um empréstimo.
-5. Registrar a devolução, completa ou parcial [v2], com o estado em que o objeto voltou, o desfecho do dano e a contestação do amigo.
-6. Registrar perda e reaparecimento [v2].
+5. Registrar a devolução completa, com o estado em que o objeto voltou, o desfecho do dano e a contestação do amigo. A devolução parcial é [v2].
+6. Registrar perda. O reaparecimento do objeto perdido é [v2].
 7. Listar empréstimos ativos, atrasados e encerrados.
 8. Avisar o dono sobre prazos próximos e atrasos, por notificação local.
 9. Consultar o histórico de um objeto e de um amigo.
@@ -64,10 +64,10 @@ Cada termo tem este sentido único em toda a spec.
 - **Em tolerância:** rótulo de um empréstimo Ativo ou Devolvido parcialmente entre o 1º e o 3º dia depois da data prevista. Não é um estado.
 - **Ativo:** estado do empréstimo que está com o amigo e não está Atrasado nem Devolvido parcialmente: sem prazo, dentro do prazo ou em tolerância.
 - **Atrasado:** estado do empréstimo que não foi devolvido por completo até 00:00 do 4º dia depois da data prevista.
-- **Dias de atraso:** hoje − (data prevista + 3). No 4º dia depois da data prevista, vale 1.
+- **Dias de atraso:** hoje − (data prevista + 3). No 4º dia depois da data prevista, vale 1. Enquanto o empréstimo está Atrasado, o valor mínimo é 1, mesmo que o fuso do aparelho recue.
 - **Devolvido parcialmente [v2]:** estado do empréstimo em que parte dos itens voltou e o empréstimo ainda não está Atrasado.
 - **Devolvido:** estado final do empréstimo em que todos os itens (ou o objeto sem itens) voltaram.
-- **Perdido:** estado que encerra o empréstimo cujo objeto (ou cujos itens pendentes) o dono declarou que não vão voltar. Só sai dele por "Objeto reapareceu" (RN50).
+- **Perdido:** estado que encerra o empréstimo cujo objeto (ou cujos itens pendentes) o dono declarou que não vão voltar. No MVP é final; na v2, só sai dele por "Objeto reapareceu" (RN50).
 - **Em aberto:** empréstimo nos estados Ativo, Atrasado ou Devolvido parcialmente.
 - **Encerrado:** empréstimo nos estados Devolvido ou Perdido.
 - **Situação do objeto:** Disponível, Emprestado ou Perdido, calculada pela RN08. É diferente do estado do empréstimo.
@@ -93,7 +93,7 @@ Cada termo tem este sentido único em toda a spec.
 
 ## 5. Regras de negócio
 
-Regras, trechos e cenários marcados com **[v2]** ficam fora do MVP (seção 2.3).
+Regras, trechos e cenários marcados com **[v2]** ficam fora do MVP (seção 2.3). Numa regra do MVP, toda menção a itens, devolução parcial, reaparecimento, sugestão de bloqueio ou backup vale só na v2, mesmo sem a marca ao lado.
 
 ### 5.1 Gerais
 
@@ -122,7 +122,7 @@ Regras, trechos e cenários marcados com **[v2]** ficam fora do MVP (seção 2.3
   | Outros | 14 |
 
 - **RN07** — A escala de estado de conservação é Novo (1), Bom (2), Desgastado (3), Danificado (4), Inutilizado (5).
-- **RN08** — A situação do objeto é calculada assim: **Emprestado** se tem empréstimo em aberto; **Perdido** se o último empréstimo (o criado mais recentemente) está Perdido e nenhum item voltou nele (RN49); **Disponível** nos demais casos. Arquivado é uma marca à parte (RN58). Um objeto Perdido só volta a Disponível por "Objeto reapareceu" (RN50).
+- **RN08** — A situação do objeto é calculada assim: **Emprestado** se tem empréstimo em aberto; **Perdido** se o último empréstimo (o criado mais recentemente) está Perdido e nenhum item voltou nele (RN49); **Disponível** nos demais casos. Arquivado é uma marca à parte (RN58). No MVP, um objeto Perdido não volta a Disponível; na v2, só volta por "Objeto reapareceu" (RN50).
 - **RN09** — Um objeto só pode ser escolhido para novo empréstimo se estiver Disponível, não arquivado e com estado de conservação diferente de Inutilizado.
 - **RN10** — Um objeto tem no máximo um empréstimo em aberto por vez.
 - **RN11** — Nomes de objeto repetidos são permitidos.
@@ -147,7 +147,7 @@ Regras, trechos e cenários marcados com **[v2]** ficam fora do MVP (seção 2.3
 
 - **RN22** — Um empréstimo Ativo ou Devolvido parcialmente com data prevista passa a Atrasado às 00:00 do dia data prevista + 4. A mudança vale pela data, mesmo com o app fechado, e aparece da próxima vez que o app mostrar o empréstimo. O app grava data_atrasado = data prevista + 4. Um empréstimo Atrasado nunca volta a Ativo ou Devolvido parcialmente, nem se o fuso do aparelho mudar.
 - **RN23** — Do dia data prevista + 1 ao dia data prevista + 3, o empréstimo continua no seu estado e mostra o rótulo "Em tolerância — fica atrasado em N dias" (com a RN73), em que N = (data prevista + 4) − hoje.
-- **RN24** — Um amigo com empréstimo Atrasado não fica impedido de receber outro empréstimo. Ao escolher esse amigo num novo empréstimo, o app mostra "<nome> tem <Q> empréstimos atrasados: <objeto> (<D> dias de atraso), <objeto> (<D> dias de atraso). Emprestar mesmo assim?" com os botões "Emprestar" e "Cancelar". D são os dias de atraso do glossário; os objetos vêm em ordem decrescente de D, separados por vírgula; vale a RN73.
+- **RN24** — Um amigo com empréstimo Atrasado, ou que perdeu ou danificou um objeto, não fica impedido de receber outro empréstimo, mas o dono é alertado. Ao escolher num novo empréstimo um amigo que tenha (a) empréstimo Atrasado ou (b) nos últimos 365 dias até hoje, empréstimo Perdido (pela data da perda) ou empréstimo encerrado com dano (pela data de encerramento), o app mostra uma mensagem com os botões "Emprestar" e "Cancelar", montada assim: "<nome> " + a parte (a), se houver + a parte (b), se houver + "Emprestar mesmo assim?". Parte (a): "tem <Q> empréstimos atrasados: <objeto> (<D> dias de atraso), <objeto> (<D> dias de atraso)." Parte (b): "teve <P> perdas e <N> devoluções com dano nos últimos 12 meses."; a parcela com zero é omitida, e quando há a parte (a) a parte (b) começa com "Teve". D são os dias de atraso do glossário; os objetos vêm em ordem decrescente de D, separados por vírgula; vale a RN73.
 - **RN25** — Em um empréstimo Atrasado com 30 ou mais dias de atraso, a tela do empréstimo mostra a faixa "Atrasado há <D> dias. Marcar como perdido?" com o botão "Marcar como perdido". O app nunca marca perda sozinho.
 
 ### 5.6 Avisos
@@ -155,7 +155,7 @@ Regras, trechos e cenários marcados com **[v2]** ficam fora do MVP (seção 2.3
 - **RN26** — Para empréstimo com data prevista, o app envia um aviso às 09:00 do dia data prevista − 1 ("<objeto> com <amigo>: devolução amanhã (<data>).") e outro às 09:00 da data prevista ("<objeto> com <amigo>: devolução hoje.").
 - **RN27** — Para empréstimo Atrasado, o app envia um aviso às 09:00 de cada um dos 7 primeiros dias de atraso (1º ao 7º) e, depois, a cada 7 dias (14º, 21º, 28º... dia de atraso): "<objeto> com <amigo>: <D> dias de atraso." Não há aviso nos dias de tolerância.
 - **RN28** — Para empréstimo sem prazo em aberto, o app envia um lembrete às 09:00 a cada 30 dias depois da data de saída: "<objeto> está com <amigo> há <N> dias."
-- **RN29** — Os avisos são notificações locais agendadas no celular. Como o iOS aceita no máximo 64 notificações locais pendentes, o app mantém agendados só os 60 avisos mais próximos, em ordem de data e hora, somando todos os empréstimos; as séries sem fim das RN27 e RN28 nunca são agendadas por inteiro. O app recalcula essa lista (cancela os agendados e agenda de novo os 60 mais próximos) toda vez que é aberto ou volta ao primeiro plano e em toda ação que muda avisos: criar, renovar, definir prazo, devolver, marcar perda, excluir, silenciar, reativar e importar backup. Avisos com horário anterior ao momento do agendamento não são enviados. Se o app ficar fechado até os avisos agendados acabarem, os seguintes só voltam a ser agendados na próxima abertura (limite registrado na seção 12).
+- **RN29** — Os avisos são notificações locais agendadas no celular. Como o iOS aceita no máximo 64 notificações locais pendentes, o app mantém agendados só 60 avisos, somando todos os empréstimos: entram primeiro todos os avisos de prazo (RN26) dos próximos 7 dias e, depois, os demais avisos mais próximos, em ordem de data e hora; as séries sem fim das RN27 e RN28 nunca são agendadas por inteiro. O app recalcula essa lista (cancela os agendados e agenda de novo os 60 mais próximos) toda vez que é aberto ou volta ao primeiro plano e em toda ação que muda avisos: criar, renovar, definir prazo, devolver, marcar perda, excluir, silenciar, reativar e importar backup. Avisos com horário anterior ao momento do agendamento não são enviados. Se o app ficar fechado até os avisos agendados acabarem, os seguintes só voltam a ser agendados na próxima abertura (limite registrado na seção 12).
 - **RN30** — Os avisos de um empréstimo param quando ele é encerrado, quando é excluído (RN75) ou quando o dono o silencia. O dono pode silenciar e reativar os avisos de cada empréstimo a qualquer momento; ao reativar, só os avisos futuros da mesma série são agendados (os de atraso seguem os dias da RN27, contados desde o 1º dia de atraso). Renovar não desfaz o silenciamento.
 - **RN31** — Se a permissão de notificação do celular estiver negada, a tela inicial mostra a faixa "Avisos desligados. Ative as notificações nas configurações do celular." As listas, os estados e a faixa da RN25 continuam funcionando; só as notificações deixam de chegar.
 
@@ -166,18 +166,18 @@ Regras, trechos e cenários marcados com **[v2]** ficam fora do MVP (seção 2.3
 - **RN34** — Um empréstimo pode ser renovado uma única vez. Depois dela, a opção "Renovar" não aparece.
 - **RN35** — Cada renovação soma de 1 a 30 dias à data prevista anterior.
 - **RN36** — A nova data prevista tem que ser maior ou igual a hoje. Se não for, o app mostra "A nova data (<data>) já passou. Renove por pelo menos <N> dias." e não salva, em que N = hoje − data prevista anterior.
-- **RN37** — O limite de 90 dias da RN16 vale só para o prazo inicial; a data prevista pode passar de 90 dias por causa de renovações.
+- **RN37** — O limite de 90 dias da RN16 vale só para o prazo inicial; a data prevista pode passar de 90 dias por causa da renovação.
 
 ### 5.8 Devolução e dano
 
 - **RN38** — Ao registrar um empréstimo, o dono informa o estado de conservação na saída, que não pode ser Inutilizado (a opção não aparece). O campo vem com o estado atual do objeto; se o dono mudar, o estado atual do objeto também muda. Foto de saída é opcional (mesmas regras da RN04). No objeto com itens [v2], o estado na saída é informado item a item, com as mesmas regras.
 - **RN39** — A devolução é registrada sempre com a data de hoje.
-- **RN40** — Em toda devolução o dono informa o estado de conservação do que voltou naquele momento (obrigatório) e pode anexar uma foto (opcional): no objeto sem itens, o estado do objeto; no objeto com itens [v2], o estado de cada item devolvido. Esse estado passa a ser o estado atual do objeto ou do item.
+- **RN40** — Em toda devolução o dono informa o estado de conservação do que voltou naquele momento (obrigatório) e pode anexar uma foto (opcional): no objeto sem itens, o estado do objeto; no objeto com itens [v2], o estado de cada item devolvido. Esse estado passa a ser o estado atual do objeto ou do item. No objeto sem itens, a devolução é sempre completa e leva o empréstimo, Ativo ou Atrasado, a Devolvido.
 - **RN41** — **[v2]** Objeto com itens: ao registrar o empréstimo, todos os itens ativos do objeto saem com ele (não há escolha de itens) e o app os guarda em ItemEmprestado. Na devolução, o dono marca quais itens pendentes voltaram (pelo menos 1). Se ainda faltar algum, a devolução é parcial. Objeto sem itens: a devolução é sempre completa.
 - **RN42** — **[v2]** Devolução parcial em empréstimo Ativo leva a Devolvido parcialmente. Devolução parcial em empréstimo Atrasado mantém Atrasado. A devolução que faz voltar o último item pendente leva a Devolvido.
 - **RN43** — **[v2]** Um empréstimo Devolvido parcialmente continua contando prazo, tolerância, atraso e avisos (RN21 a RN30). A tela do empréstimo lista os itens pendentes, e os avisos das RN26 e RN27 terminam com " Itens pendentes: <item>, <item>."
 - **RN44** — Há dano quando o número do estado na volta é maior que o do estado na saída (RN07). No objeto com itens [v2], a comparação é feita item a item, entre o estado de saída e o estado de volta de cada item; o dano de um item fica gravado na devolução em que ele voltou e não é alterado pelas devoluções seguintes de outros itens. O empréstimo tem dano se o objeto (sem itens) ou pelo menos um item devolvido tem dano.
-- **RN45** — Se o empréstimo tem dano (RN44), o dono escolhe um desfecho (obrigatório) na ação que encerra o empréstimo — a devolução que o leva a Devolvido, a marcação de perda ou o reaparecimento: Sem ação, Reparo combinado ou Reposição combinada. Há um único desfecho por empréstimo. Depois, só em empréstimo encerrado, o dono pode trocá-lo por qualquer um dos quatro, inclusive Resolvido; o desfecho nunca fica vazio. O app não registra valores em dinheiro.
+- **RN45** — Se o empréstimo tem dano (RN44), o dono escolhe um desfecho (obrigatório) na ação que encerra o empréstimo — a devolução que o leva a Devolvido ou, na v2, a marcação de perda depois de uma devolução parcial com dano e o reaparecimento: Sem ação, Reparo combinado ou Reposição combinada. Há um único desfecho por empréstimo. Depois, só em empréstimo encerrado, o dono pode trocá-lo por qualquer um dos quatro, inclusive Resolvido; o desfecho nunca fica vazio. O app não registra valores em dinheiro.
 - **RN46** — O dono pode registrar uma contestação, só em empréstimo encerrado com dano: texto de 1 a 500 caracteres, no máximo uma por empréstimo, editável. A contestação não altera o estado na volta, o dano nem o desfecho.
 - **RN47** — Quando a devolução que leva o empréstimo a Devolvido deixa o objeto com estado de conservação Inutilizado e ele não está arquivado, o app mostra "<objeto> voltou inutilizado. Arquivar?" com os botões "Arquivar" e "Agora não".
 
@@ -212,7 +212,7 @@ Regras, trechos e cenários marcados com **[v2]** ficam fora do MVP (seção 2.3
 - **RN61** — Do amigo, o app guarda só os dados da RN12, com a finalidade de o dono identificar quem está com cada objeto e como contatá-lo. A observação mostra o texto de ajuda "Não escreva dados sensíveis (saúde, religião, documentos)."
 - **RN62** — Os dados ficam só no aparelho do dono e não são enviados a nenhum servidor.
 - **RN63** — O amigo pede a remoção dos seus dados ao dono, fora do app. O dono usa "Remover dados pessoais" na ficha do amigo.
-- **RN64** — "Remover dados pessoais" só é permitido se o amigo não tiver empréstimo em aberto; se tiver, o app mostra "Encerre os empréstimos de <nome> antes de remover os dados." Se o amigo não tiver nenhum empréstimo, a opção exclui o cadastro (RN57).
+- **RN64** — "Remover dados pessoais" só é permitido se o amigo não tiver empréstimo em aberto; se tiver, o app mostra "Encerre os empréstimos de <nome> antes de remover os dados." Também não é permitido enquanto o amigo tiver empréstimo encerrado com dano e desfecho "Reparo combinado" ou "Reposição combinada"; nesse caso o app mostra "Resolva o dano dos empréstimos de <nome> antes de remover os dados." Perda e dano com desfecho "Sem ação" ou "Resolvido" não impedem a remoção. Se o amigo não tiver nenhum empréstimo, a opção exclui o cadastro (RN57) e, [v2] junto com o backup, grava o amigo na lista de remoções, sem número.
 - **RN65** — A remoção pede confirmação ("Os dados de <nome> serão apagados e não podem ser recuperados. Continuar?") e então: troca o nome por "Contato removido #N", em que N é o contador_anonimizacao + 1 (começa em 1, só avança quando a remoção é confirmada, nunca se repete dentro dos dados do app e vai junto no backup); apaga telefone, observação e motivo de bloqueio; apaga as contestações dos empréstimos desse amigo; marca o amigo como anonimizado e arquivado. Os empréstimos continuam no histórico dos objetos. [v2, junto com o backup] A remoção também grava o amigo e o número N na lista de remoções (RemocaoLGPD) e, ao terminar, mostra "Backups feitos antes de hoje ainda contêm os dados de <nome>. Apague esses arquivos."
 - **RN66** — Amigo anonimizado não pode ser editado, desarquivado nem desbloqueado, e não entra na verificação de nome repetido (RN13).
 
@@ -226,11 +226,11 @@ Regras, trechos e cenários marcados com **[v2]** ficam fora do MVP (seção 2.3
 ### 5.14 Backup
 
 - **RN71** — **[v2]** "Exportar backup" gera o arquivo `empresta-ai-backup-aaaa-mm-dd.zip` com todos os dados e fotos, salvo onde o dono escolher. Antes de exportar, o app mostra "O backup contém dados pessoais dos seus amigos. Guarde-o em local seguro." O arquivo não tem senha nem criptografia e inclui a Configuracao e o silenciamento dos avisos, mas não a lista de remoções (RN65).
-- **RN72** — **[v2]** "Importar backup" substitui todos os dados atuais pelos do arquivo, depois da confirmação "Os dados atuais serão substituídos. Continuar?". Se o arquivo não for um backup válido do Empresta Aí, o app mostra "Arquivo de backup inválido." e nada muda. Um backup é válido quando é um .zip gerado pela RN71, contém o arquivo `dados.json` (com o campo `versao_formato`, que nesta especificação vale 1) e a pasta `fotos/` com todas as fotos citadas nele. Se a versão do formato for mais nova que a do app, a mensagem é "Este backup é de uma versão mais nova do app. Atualize o app para importar." e nada muda. A lista de remoções (RN65) não é substituída pela importação: depois de importar, o app aplica de novo a RN65, sem pedir confirmação, a todo amigo do arquivo que esteja nessa lista, com o mesmo número N, e o contador_anonimizacao passa a ser o maior entre o do arquivo e o maior N da lista. Limite conhecido: a lista existe só neste aparelho; se o app for reinstalado, ou se o backup for importado em outro aparelho, um backup anterior à remoção traz os dados do amigo de volta (seção 12). Depois de importar, os avisos são reagendados (RN29).
+- **RN72** — **[v2]** "Importar backup" substitui todos os dados atuais pelos do arquivo, depois da confirmação "Os dados atuais serão substituídos. Continuar?". Se o arquivo não for um backup válido do Empresta Aí, o app mostra "Arquivo de backup inválido." e nada muda. Um backup é válido quando é um .zip gerado pela RN71, contém o arquivo `dados.json` (com o campo `versao_formato`, que nesta especificação vale 1) e a pasta `fotos/` com todas as fotos citadas nele. Se a versão do formato for mais nova que a do app, a mensagem é "Este backup é de uma versão mais nova do app. Atualize o app para importar." e nada muda. A lista de remoções (RN65) não é substituída pela importação: depois de importar, o app trata todo amigo do arquivo que esteja nessa lista, sem pedir confirmação: se está na lista com número N, aplica de novo a RN65 com o mesmo N; se está sem número, exclui o cadastro. A reaplicação respeita a RN64: se, no arquivo, o amigo tiver empréstimo em aberto ou dano não resolvido, os dados dele ficam como estão no arquivo e o app mostra "<Q> amigos deste backup tinham pedido a remoção dos dados e têm pendências. Encerre as pendências e remova os dados de novo." O contador_anonimizacao passa a ser o maior entre o do arquivo e o maior N da lista. Limite conhecido: a lista existe só neste aparelho; se o app for reinstalado, ou se o backup for importado em outro aparelho, um backup anterior à remoção traz os dados do amigo de volta (seção 12). Depois de importar, os avisos são reagendados (RN29).
 
 ## 6. Histórias de usuário
 
-Nos cenários, as datas são exemplos concretos; "hoje é 10/03/2027" fixa o dia de referência.
+Nos cenários, as datas são exemplos concretos; "hoje é 10/03/2027" fixa o dia de referência. Nas listas "Regras relacionadas", as RN marcadas [v2] na seção 5 valem só para os cenários [v2] da história.
 
 ### HU01 — Cadastrar objeto
 
@@ -331,6 +331,18 @@ Critérios de aceite:
   Quando escolho "Carla Souza" num novo empréstimo
   Então vejo "Carla Souza tem 1 empréstimo atrasado: Serra Tico-Tico (5 dias de atraso). Emprestar mesmo assim?"
   E, ao tocar em "Emprestar", sigo para salvar o empréstimo; ao tocar em "Cancelar", volto à seleção de amigo
+- Cenário: amigo que perdeu e danificou
+  Dado que hoje é 10/03/2027 e "Pedro Lima" não tem empréstimo Atrasado, mas teve 1 empréstimo Perdido em 05/01/2027 e 1 empréstimo Devolvido com dano em 20/02/2027
+  Quando escolho "Pedro Lima" num novo empréstimo
+  Então vejo "Pedro Lima teve 1 perda e 1 devolução com dano nos últimos 12 meses. Emprestar mesmo assim?"
+- Cenário: amigo com atraso e com perda
+  Dado que "Carla Souza" tem o empréstimo da "Serra Tico-Tico" Atrasado há 5 dias e teve 1 empréstimo Perdido nos últimos 365 dias
+  Quando escolho "Carla Souza" num novo empréstimo
+  Então vejo "Carla Souza tem 1 empréstimo atrasado: Serra Tico-Tico (5 dias de atraso). Teve 1 perda nos últimos 12 meses. Emprestar mesmo assim?"
+- Cenário: perda antiga não alerta
+  Dado que hoje é 10/03/2027 e a única perda de "Pedro Lima" foi em 01/03/2026
+  Quando escolho "Pedro Lima" num novo empréstimo
+  Então nenhum alerta aparece
 - Cenário: estado de saída diferente do cadastro
   Dado que a "Furadeira Bosch" está cadastrada como "Bom"
   Quando registro o empréstimo com estado na saída "Desgastado"
@@ -666,6 +678,14 @@ Critérios de aceite:
   Dado que "Pedro Lima" tem um empréstimo Atrasado
   Quando escolho "Remover dados pessoais"
   Então vejo "Encerre os empréstimos de Pedro Lima antes de remover os dados." e nada muda
+- Cenário: remoção com dano não resolvido
+  Dado que "Pedro Lima" tem um empréstimo Devolvido com dano e desfecho "Reparo combinado"
+  Quando escolho "Remover dados pessoais"
+  Então vejo "Resolva o dano dos empréstimos de Pedro Lima antes de remover os dados." e nada muda
+- Cenário: remoção depois de resolver o dano
+  Dado que troquei o desfecho desse empréstimo de "Pedro Lima" para "Resolvido"
+  Quando escolho "Remover dados pessoais" e confirmo
+  Então o amigo passa a se chamar "Contato removido #1"
 - Cenário: amigo sem empréstimos
   Dado que "Ana Reis" não tem nenhum empréstimo
   Quando escolho "Remover dados pessoais" e confirmo
@@ -710,22 +730,22 @@ Estado inicial: todo empréstimo nasce **Ativo**; a RN18 impede que nasça com d
 
 | Estado atual | Evento | Próximo estado | Regra |
 |---|---|---|---|
-| Ativo | Devolução completa | Devolvido | RN41, RN42 |
-| Ativo | Devolução parcial | Devolvido parcialmente | RN41, RN42 |
+| Ativo | Devolução completa | Devolvido | RN40; com itens [v2], RN41 e RN42 |
+| Ativo | Devolução parcial | Devolvido parcialmente [v2] | RN41, RN42 |
 | Ativo | Renovação (com data prevista, ainda não renovado) | Ativo | RN33, RN34 |
 | Ativo | Definir prazo (sem prazo) | Ativo | RN20 |
 | Ativo | 00:00 do dia data prevista + 4 | Atrasado | RN22 |
 | Ativo | Marcar como perdido | Perdido | RN48 |
-| Devolvido parcialmente | Devolução dos itens que faltavam | Devolvido | RN42 |
-| Devolvido parcialmente | Nova devolução parcial | Devolvido parcialmente | RN42 |
-| Devolvido parcialmente | Renovação (com data prevista, ainda não renovado) | Devolvido parcialmente | RN33, RN34 |
-| Devolvido parcialmente | Definir prazo (sem prazo) | Devolvido parcialmente | RN20 |
-| Devolvido parcialmente | 00:00 do dia data prevista + 4 | Atrasado | RN22, RN43 |
-| Devolvido parcialmente | Marcar como perdido | Perdido | RN48, RN49 |
-| Atrasado | Devolução completa | Devolvido | RN42 |
-| Atrasado | Devolução parcial | Atrasado | RN42 |
+| Devolvido parcialmente [v2] | Devolução dos itens que faltavam | Devolvido | RN42 |
+| Devolvido parcialmente [v2] | Nova devolução parcial | Devolvido parcialmente [v2] | RN42 |
+| Devolvido parcialmente [v2] | Renovação (com data prevista, ainda não renovado) | Devolvido parcialmente [v2] | RN33, RN34 |
+| Devolvido parcialmente [v2] | Definir prazo (sem prazo) | Devolvido parcialmente [v2] | RN20 |
+| Devolvido parcialmente [v2] | 00:00 do dia data prevista + 4 | Atrasado | RN22, RN43 |
+| Devolvido parcialmente [v2] | Marcar como perdido | Perdido | RN48, RN49 |
+| Atrasado | Devolução completa | Devolvido | RN40; com itens [v2], RN42 |
+| Atrasado | Devolução parcial [v2] | Atrasado | RN42 |
 | Atrasado | Marcar como perdido | Perdido | RN48 |
-| Perdido | Objeto reapareceu | Devolvido | RN50, RN51 |
+| Perdido | Objeto reapareceu [v2] | Devolvido | RN50, RN51 |
 | Ativo | Excluir registro por engano (no dia da criação, sem renovação nem devolução) | (o empréstimo deixa de existir) | RN75 |
 
 Transições proibidas (o app não oferece a ação):
@@ -801,7 +821,7 @@ Relação: Objeto 1 — 0..N Item. O objeto não tem itens ou tem de 2 a 20 iten
 | desfecho_dano | enum Sem ação, Reparo combinado, Reposição combinada, Resolvido | só se houver dano | RN45 |
 | contestacao | texto(500) | não | RN46 |
 | data_perda | data | só se já foi Perdido | RN48 |
-| perda_revertida | booleano, padrão falso | sim | RN50 |
+| perda_revertida | booleano, padrão falso [v2; no MVP é sempre falso] | sim | RN50 |
 | criado_em | data-hora | sim | RN75 |
 | estado_objeto_antes | enum da RN07 (estado atual do objeto antes do registro) | sim no objeto sem itens | RN75 |
 
@@ -826,7 +846,7 @@ O dano é calculado pela RN44 e não é gravado: no objeto sem itens, compara o 
 | criado_em | data-hora (ordena devoluções do mesmo dia no histórico) | sim | RN69 |
 | estado | enum da RN07 | sim no objeto sem itens; vazio no objeto com itens [v2] | RN40 |
 | foto | arquivo | não | RN40 |
-| origem | enum Normal, Reaparecimento | sim | RN50 |
+| origem | enum Normal, Reaparecimento [v2; no MVP é sempre Normal] | sim | RN50 |
 
 ### ItemEmprestado [v2]
 | Atributo | Tipo | Obrigatório | Regra |
@@ -856,7 +876,7 @@ Fica fora do backup e não é apagada nem substituída na importação (RN72).
 | Atributo | Tipo | Obrigatório | Regra |
 |---|---|---|---|
 | amigo_id | uuid (do amigo anonimizado) | sim | RN65, RN72 |
-| numero | inteiro (o N de "Contato removido #N") | sim | RN65 |
+| numero | inteiro (o N de "Contato removido #N"); vazio quando o amigo foi excluído por não ter empréstimos | não | RN64, RN65 |
 | data | data da remoção | sim | RN65 |
 
 Relações: Objeto 1—N Emprestimo; Amigo 1—N Emprestimo; Emprestimo 1—0..1 Renovacao; Emprestimo 1—N ItemEmprestado; Emprestimo 1—N Devolucao; Devolucao 1—N ItemDevolvido.
@@ -884,6 +904,12 @@ Relações: Objeto 1—N Emprestimo; Amigo 1—N Emprestimo; Emprestimo 1—0..1
 | Objeto Inutilizado escolhido para empréstimo | Não aparece na seleção | RN09 |
 | Amigo bloqueado, arquivado ou anonimizado | Não aparece na seleção | RN14 |
 | Amigo com atraso recebe novo empréstimo | Alerta com confirmação; não impede | RN24 |
+| Amigo com perda ou dano nos últimos 365 dias recebe novo empréstimo | Alerta com confirmação; não impede | RN24 |
+| Amigo com perda há 366 dias, sem atraso | Nenhum alerta | RN24 |
+| Remover dados de amigo com dano em "Reparo combinado" ou "Reposição combinada" | Mensagem; nada muda | RN64 |
+| Remover dados de amigo com empréstimo Perdido e sem dano pendente | Permitido | RN64 |
+| Fuso do aparelho recua com empréstimo Atrasado no 1º dia | Dias de atraso continuam valendo 1 | RN22, glossário |
+| 10 empréstimos atrasados e um prazo vencendo amanhã | O aviso de prazo entra na fila de 60 antes dos avisos de atraso | RN29 |
 | Volta melhor que a saída (saiu Desgastado, voltou Bom) | Sem dano; estado atual vira Bom | RN40, RN44 |
 | Volta igual à saída | Sem dano | RN44 |
 | [v2] Item volta Danificado numa devolução parcial e os outros voltam Bom depois | O dano do item continua; empréstimo "Com dano"; objeto fica Danificado | RN05, RN44 |
@@ -926,7 +952,7 @@ Relações: Objeto 1—N Emprestimo; Amigo 1—N Emprestimo; Emprestimo 1—0..1
 
 "D" = decisão tomada por mim na entrevista. "P" = premissa: detalhe proposto pela IA durante a redação, revisado e aceito por mim. "(IA)" = aceitei a opção que a IA recomendou. "(mudei)" = troquei a sugestão da IA por uma escolha minha na revisão de 12/11/2026, depois da correção do professor.
 
-Onde eu discordei da IA: D03, D05 e D11 (já na entrevista) e D07, D08, D09, D16 e D25 (na revisão). O corte de MVP (D24) também é meu.
+Onde eu discordei da IA: D03, D05 e D11 (já na entrevista) e D07, D08, D09, D16, D25 e D27 (na revisão). O corte de MVP (D24) também é meu.
 
 | ID | Decisão | Alternativas consideradas | Justificativa |
 |---|---|---|---|
@@ -956,6 +982,8 @@ Onde eu discordei da IA: D03, D05 e D11 (já na entrevista) e D07, D08, D09, D16
 | D24 | Corte de MVP: itens e devolução parcial, reaparecimento, sugestão automática de bloqueio e backup ficam para a v2 (seção 2.3) | Entregar tudo na v1; cortar também a anonimização | O professor apontou o escopo grande para uma v1. Essas quatro funções concentram o estado mais difícil e os casos mais raros, e o app responde à pergunta central sem elas. Mantive a anonimização porque o enunciado exige a resposta de LGPD |
 | D25 | [v2] O dano é avaliado item a item: cada item tem estado na saída e na volta (mudei) | Valer o pior estado entre as devoluções (sugestão da IA); valer a última devolução (regra anterior, P09) | Com a regra anterior, o console voltava Danificado, o controle voltava Bom depois e o dano sumia. O pior estado resolveria, mas não diria qual peça foi danificada; por item, o histórico mostra exatamente o que voltou estragado |
 | D26 | [v2] Lista de remoções fora do backup, reaplicada ao importar; limite em outro aparelho admitido (IA) | Só admitir o limite; cifrar ou invalidar backups antigos | Um backup anterior à remoção restaurava o nome e o telefone do amigo anonimizado. A lista resolve no mesmo aparelho; o app não alcança arquivos que já saíram dele, então esse limite fica declarado na seção 12 |
+| D27 | Remoção de dados bloqueada enquanto houver dano com desfecho "Reparo combinado" ou "Reposição combinada" (mudei) | Permitir com aviso ao dono (sugestão da IA); deixar como estava | Sem isso, o amigo que deve um conserto pede a remoção e some do histórico. Enquanto o acordo está pendente, o dono precisa saber com quem combinou; resolvido o dano, a remoção é liberada |
+| D28 | O alerta ao emprestar também cita perdas e devoluções com dano dos últimos 12 meses (IA) | Alertar só de atraso e deixar o resto para a v2 | No MVP a sugestão de bloqueio não existe; sem esse alerta, quem perdeu ou danificou um objeto receberia outro empréstimo sem nenhum sinal |
 | P01 | Categorias fixas, com os prazos da RN06 | Dono cria categorias | Lista fixa basta para o tamanho do app e deixa o prazo padrão testável |
 | P02 | "Em tolerância" é rótulo, não estado | Estado próprio | Nada muda de comportamento na tolerância além do texto; menos transições |
 | P03 | Devolução parcial que chega ao 4º dia vira Atrasado | Estado "parcialmente atrasado" | Atrasado já é o estado de cobrança; a lista de itens pendentes mostra o que falta |
@@ -969,12 +997,12 @@ Onde eu discordei da IA: D03, D05 e D11 (já na entrevista) e D07, D08, D09, D16
 | P11 | Remoção de dados também apaga as contestações do amigo | Manter as contestações | A contestação traz as palavras do amigo, que podem identificá-lo |
 | P12 | Lembrete a cada 30 dias em empréstimo sem prazo | Nenhum aviso | Sem prazo não pode virar "esquecido para sempre" |
 | P13 | Nome de amigo repetido gera confirmação; nome de objeto repetido, não | Proibir repetição | Duas "Carlas" existem; dois objetos iguais também, e o risco de confusão é menor |
-| P14 | Um único desfecho por empréstimo, escolhido na ação que o encerra: devolução final, perda ou reaparecimento (RN45) | Um desfecho por devolução parcial; sem desfecho em empréstimo Perdido | O acordo com o amigo é um só; pedir o desfecho também na perda cobre o amigo que devolve uma peça danificada e some com o resto |
+| P14 | Um único desfecho por empréstimo, escolhido na ação que o encerra: no MVP, a devolução; na v2, também a perda e o reaparecimento (RN45) | Um desfecho por devolução parcial; sem desfecho em empréstimo Perdido | O acordo com o amigo é um só; pedir o desfecho também na perda cobre o amigo que devolve uma peça danificada e some com o resto |
 | P15 | Contestação e troca de desfecho só em empréstimo encerrado | Também em empréstimo em aberto | Só existe a conta final do dano quando o empréstimo termina |
 | P16 | Estado na saída não pode ser Inutilizado | Permitir | Objeto inutilizado não se empresta (RN09) |
 | P17 | Atrasado nunca volta a Ativo, nem com troca de fuso | Recalcular sempre pela data | Evita estado oscilando e atraso contado duas vezes no bloqueio |
-| P18 | "Objeto reapareceu" devolve de uma vez todos os itens pendentes | Marcar item a item | O dono usa a opção quando o que faltava apareceu; mantém o registro curto |
-| P19 | Item com histórico não pode ser removido, só renomeado; itens perdidos não contam no mínimo de 2 | Permitir remover | Preserva o histórico de devoluções do objeto |
+| P18 | [v2] "Objeto reapareceu" devolve de uma vez todos os itens pendentes | Marcar item a item | O dono usa a opção quando o que faltava apareceu; mantém o registro curto |
+| P19 | [v2] Item com histórico não pode ser removido, só renomeado; itens perdidos não contam no mínimo de 2 | Permitir remover | Preserva o histórico de devoluções do objeto |
 | P20 | Empréstimo registrado por engano pode ser excluído só no dia da criação, sem renovação nem devolução; depois disso nada do registro é editável | Edição livre; nunca excluir | Corrige erro de digitação sem permitir reescrever o histórico |
 | P21 | Backup sem senha nem criptografia | Backup com senha | Mantém a v1 simples; o aviso da RN71 orienta guardar o arquivo em local seguro |
 | P22 | Calendários só mostram datas válidas; mensagens seguem o padrão da RN74 | Validar só ao salvar | Impede o erro antes de ele acontecer e padroniza os textos |
@@ -987,20 +1015,25 @@ Onde eu discordei da IA: D03, D05 e D11 (já na entrevista) e D07, D08, D09, D16
 | P29 | Excluir empréstimo por engano cancela os avisos e devolve o estado anterior do objeto (RN75) | Manter o estado alterado | Um registro feito por engano não deve deixar rastro no objeto |
 | P30 | Backup válido = .zip da RN71 com `dados.json` versionado e todas as fotos (RN72) | Aceitar qualquer .zip | Evita importar dados incompletos ou de uma versão que o app não entende |
 | P31 | Limites e formatos propostos pela IA na redação: tamanhos de campo (RN04, RN05, RN12), foto de até 10 MB, remoção de espaços (RN03), singular e plural (RN73), ordem das listas (RN67), formato do resumo do amigo (RN70), nome e conteúdo do backup (RN71, RN72) e os números da seção 10 (Android 10 e iOS 16, 1.000 empréstimos em até 1 s com 3 GB de RAM, toque de 44×44 pt) | Deixar sem valor ("tamanho razoável", "rápido") | O enunciado pede valores testáveis no lugar de palavras vagas; os números seguem padrões comuns de apps de celular e são fáceis de verificar |
-| P32 | Todos os itens ativos saem juntos no empréstimo (RN41) | Escolher quais itens saem | Um conjunto é emprestado inteiro (D19); escolher itens transformaria o conjunto em vários objetos |
+| P32 | [v2] Todos os itens ativos saem juntos no empréstimo (RN41) | Escolher quais itens saem | Um conjunto é emprestado inteiro (D19); escolher itens transformaria o conjunto em vários objetos |
 | P33 | Se a data prevista escolhida no calendário deixar de valer após mudar a data de saída, o campo é apagado (RN16) | Bloquear a mudança da saída; ajustar a data sozinho | O dono escolhe de novo, sem o app inventar uma data |
 | P34 | O app mantém agendados só os 60 avisos mais próximos e recalcula a lista ao abrir e em toda ação que muda avisos (RN29) | Agendar as séries inteiras; agendar só o próximo aviso de cada empréstimo | O iOS aceita 64 notificações locais pendentes e as séries das RN27 e RN28 não têm fim (apontado pelo professor); 60 deixa folga de 4, e reagendar ao abrir repõe a fila |
+| P35 | Na fila de 60, os avisos de prazo dos próximos 7 dias entram antes dos de atraso (RN29) | Só ordem de data e hora | Com muitos empréstimos atrasados, os avisos diários ocupariam a fila e o dono perderia o aviso de um prazo que ainda dá para cumprir |
+| P36 | Dias de atraso nunca valem menos que 1 em empréstimo Atrasado (glossário) | Recalcular pela data | Evita um aviso de "0 dias de atraso" quando o fuso do aparelho recua (P17) |
+| P37 | [v2] O amigo excluído por não ter empréstimos também entra na lista de remoções, e a reaplicação ao importar respeita a RN64 | Listar só os anonimizados; reaplicar sempre | Sem isso, um backup antigo traria de volta o amigo excluído, e a reaplicação anonimizaria quem tem empréstimo em aberto no arquivo |
 
 ## 12. Questões em aberto
 
-Na primeira entrega esta seção dizia "Nenhuma". Depois da correção do professor, registro aqui o que a spec ainda não resolve ou que decidi sem dados de uso real.
+Na primeira entrega esta seção dizia "Nenhuma". Depois da correção do professor, e de uma análise de furos feita com IA (registrada no `prompts.md`), registro aqui o que a spec ainda não resolve ou que decidi sem dados de uso real.
 
 | # | Questão | Situação |
 |---|---|---|
-| 1 | No MVP não há backup: perder ou trocar o celular apaga todos os dados | Limite aceito para a v1; o backup é a primeira função da v2 (D24) |
+| 1 | No MVP não há backup: perder ou trocar o celular apaga todos os dados | Limite aceito para a v1; o backup fica para a v2 (D24) |
 | 2 | Um backup anterior à remoção de dados, importado em outro aparelho ou depois de reinstalar o app, traz de volta o nome e o telefone do amigo anonimizado | Limite conhecido da v2 (RN72, D26). O app avisa para apagar os backups antigos, mas não alcança arquivos que já saíram dele. Em aberto: pôr no backup uma data de validade ou cifrá-lo |
 | 3 | Se o app ficar fechado até os 60 avisos agendados acabarem, os avisos param até a próxima abertura | Limite das notificações locais sem servidor (RN29). Em aberto: usar tarefa em segundo plano do sistema para reagendar sem abrir o app |
 | 4 | Com tolerância de 3 dias, o primeiro aviso de atraso chega no 4º dia depois do prazo. Num prazo de 7 dias, isso pode ser tarde | Mantive a tolerância (D05). Em aberto: um aviso único durante a tolerância |
 | 5 | [v2] Um item Inutilizado deixa o conjunto inteiro sem poder ser emprestado (RN05, RN09) | Em aberto: permitir emprestar o conjunto sem o item inutilizado |
 | 6 | Os prazos padrão por categoria (RN06) e os números da P31 são estimativas minhas e da IA, sem dados de uso | A validar com usuários reais antes de fixar |
 | 7 | A devolução é sempre registrada com a data de hoje (P05). Quem esquece de registrar no dia gera um atraso que não existiu | Em aberto: permitir data retroativa de até 3 dias |
+| 8 | Um amigo anonimizado ou bloqueado pode ser cadastrado de novo com outro nome, e o app não percebe: a RN13 compara só o nome | Limite de um app sem conta para o amigo (D01). Em aberto: comparar também o telefone |
+| 9 | Com muitos empréstimos atrasados ao mesmo tempo, os avisos diários da primeira semana (D08) podem passar de 60 e parte deles só é agendada na próxima abertura | Atenuado pela prioridade dos avisos de prazo (P35). Em aberto: juntar os atrasos do dia num aviso só |
