@@ -90,3 +90,18 @@ As correções que exigiram decisão nova estão registradas como premissas P14 
 
 **Onde:** Claude, num agente separado.
 **Resultado:** 16 ajustes, quase todos nas listas "Regras relacionadas" das HUs, que passaram a citar todas as RNs que os cenários testam. Nenhum ponto precisou de decisão nova. Todas as contas de data conferiram.
+
+## P08 — Revisão depois da correção do professor (12/11/2026)
+**Prompt (redação revisada do pedido feito na conversa):**
+> O professor corrigiu a spec e apontou quatro problemas: o dano some numa devolução parcial seguida de outra melhor; importar um backup antigo desfaz a remoção de dados da LGPD; as séries de avisos não cabem no limite de notificações do celular; e a minha voz aparece pouco (quase tudo é sugestão da IA, o escopo é grande para uma v1 e "Questões em aberto: Nenhuma" soa como confiança excessiva). Me apresente as alternativas para cada ponto e eu decido; depois aplique as minhas decisões na spec.
+
+**Resultado:** a IA apresentou alternativas e eu decidi:
+
+| Ponto | Minha decisão | O que a IA recomendava |
+|---|---|---|
+| Dano que some | Dano avaliado item a item, com estado de saída e de volta por item (D25) | Valer o pior estado entre as devoluções. Recusei: não diria qual peça foi danificada |
+| Backup desfaz a LGPD | Lista de remoções fora do backup, reaplicada ao importar, e limite em outro aparelho admitido (D26) | A mesma. Aceitei |
+| Avisos não cabem no celular | Manter só os 60 avisos mais próximos e recalcular ao abrir o app (RN29, P34) | Proposta da IA para atender ao que o professor pediu. Aceitei |
+| Corte de MVP | Ficam para a v2: itens e devolução parcial, reaparecimento, sugestão automática de bloqueio e backup (D24) | A IA listou os candidatos; a escolha dos quatro é minha |
+| Decisões da IA que mudei | D07 (aviso 1 dia antes, não 2), D08 (avisos de atraso diários na 1ª semana), D09 (1 renovação, não 2), D16 (sugerir perda aos 30 dias, não 60) | Eram as sugestões originais da IA, aceitas na entrevista |
+| Questões em aberto | A seção 12 deixou de dizer "Nenhuma" e lista 7 limites e dúvidas | — |
