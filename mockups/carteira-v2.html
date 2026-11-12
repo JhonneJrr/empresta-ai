@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Carteira monocromática — com as funções da v2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --ink:#141414;
+  --g1:#5F5F5B;
+  --g2:#C4C4BF;
+  --g3:#ECECE8;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:#F4F4F2;color:var(--ink);font:400 16px/1.5 Geist,Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;overflow-x:hidden;font-variant-numeric:tabular-nums}
+button{font:inherit;color:inherit;border:0;background:none;cursor:pointer;padding:0}
+a{color:inherit}
+h1,h2,h3,p,dl,dd,dt,ol,ul{margin:0;padding:0;font-weight:400}
+h1,h2,h3,b,strong{font-weight:600}
+.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+
+/* ===== página ===== */
+.page{max-width:1760px;margin:0 auto;padding:36px 32px 56px}
+.page>h1{font-size:30px;line-height:1.15;letter-spacing:-.01em}
+.page>.lead{margin-top:6px;font-size:17px;color:var(--g1)}
+.frames{display:flex;gap:40px;align-items:flex-start;justify-content:center;margin-top:30px}
+.fw{display:flex;flex-direction:column;align-items:center}
+.fl{align-self:flex-start;font-size:12.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--g1);margin:0 0 12px 7px}
+.pw{zoom:var(--z,1);padding:7px}
+.phone,.desk{background:#fff;position:relative;overflow:hidden;isolation:isolate;box-shadow:0 0 0 1px var(--g2),0 24px 50px -30px rgba(20,20,20,.25)}
+.phone{width:390px;height:800px;border-radius:40px}
+.desk{width:1180px;height:760px;border-radius:28px}
+.pw.d{--z:.8}
+@media (min-width:1700px){.pw.d{--z:.95}}
+@media (max-width:1499px){.frames{flex-direction:column;align-items:center;gap:44px}.pw.d{--z:.85}}
+@media (max-width:1249px){.pw.d{--z:.7}}
+@media (max-width:999px){.pw.d{--z:.5}}
+@media (max-width:620px){.pw.d{--z:.3}.pw{--z:.85}.page{padding:28px 12px}}
+.notes{max-width:860px;margin:44px auto 0;display:grid;gap:12px}
+.notes div{display:grid;grid-template-columns:110px 1fr;gap:12px;align-items:baseline}
+.notes dt{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--g1)}
+.notes dd{font-size:15.5px}
+
+/* ===== peças ===== */
+.dl{display:flex;align-items:center;justify-content:space-between;height:44px;border-bottom:1px solid var(--g3)}
+.dl strong{font-size:14px}
+.dl .cm{display:flex}
+.dl button{min-height:44px;padding:0 8px;font-size:13px;letter-spacing:.02em;color:var(--g1)}
+.dl button:last-child{color:var(--ink);font-weight:600;padding-right:0}
+.dl button:hover{color:var(--ink)}
+.hd{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.hd h2{font-size:32px;letter-spacing:-.025em;line-height:1.1}
+.hd span{font-size:14px;color:var(--g1);white-space:nowrap}
+.fi{display:flex;gap:22px}
+.fi button{min-height:44px;font-size:14.5px;color:var(--g1);display:flex;align-items:center;gap:6px}
+.fi button.on{color:var(--ink);font-weight:600}
+.fi button.on span{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:7px}
+.btn{height:52px;border-radius:14px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;gap:10px;font-size:16px;font-weight:600;white-space:nowrap;transition:transform .35s var(--ease)}
+.btn:hover{transform:translateY(-2px)}
+.btn .ic{width:20px;height:20px;stroke-width:2}
+.btn.o{background:#fff;color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink)}
+.lk{display:inline-flex;align-items:center;gap:6px;min-height:44px;font-size:14.5px;font-weight:600;color:var(--ink);text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:1px;background:none}
+.lk .ic{width:16px;height:16px;stroke-width:2}
+
+/* ===== lista ===== */
+.gl{font-size:11.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--g1);margin:0 0 8px}
+.grp+.grp{margin-top:18px}
+.stack{display:flex;flex-direction:column;gap:12px}
+.pass{--cut:56px;--bw:1px;--perf:var(--g2);position:relative;border-radius:16px;outline:none;
+  transition:transform .4s var(--ease),filter .4s var(--ease);animation:sobe .7s var(--ease) backwards;animation-delay:calc(var(--i) * 70ms + 100ms)}
+@keyframes sobe{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.pass:hover{transform:translateY(-4px);filter:drop-shadow(0 8px 12px rgba(20,20,20,.06))}
+.pass:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
+.pass.sel{outline:2.5px solid var(--ink);outline-offset:3px}
+.card{background:#fff;border:1px solid var(--g2);border-radius:16px;position:relative;
+  -webkit-mask:radial-gradient(circle 8px at 0 calc(var(--cut) + var(--bw)),#0000 97%,#000) left/51% 100% no-repeat,radial-gradient(circle 8px at 100% calc(var(--cut) + var(--bw)),#0000 97%,#000) right/51% 100% no-repeat;
+  mask:radial-gradient(circle 8px at 0 calc(var(--cut) + var(--bw)),#0000 97%,#000) left/51% 100% no-repeat,radial-gradient(circle 8px at 100% calc(var(--cut) + var(--bw)),#0000 97%,#000) right/51% 100% no-repeat}
+.pass.late{--bw:0px;--perf:rgba(255,255,255,.4)}
+.pass.late .card{background:var(--ink);border:0;color:#fff}
+.top{height:var(--cut);padding:13px 20px 0;display:flex;justify-content:space-between;gap:12px}
+.top h3{font-size:18px;line-height:1.25;letter-spacing:-.01em;white-space:nowrap}
+.top p{font-size:14px;line-height:1.3;color:var(--g1)}
+.pass.late .top p{color:var(--g2)}
+.due{font-size:30px;font-weight:600;line-height:1;letter-spacing:-.03em;margin-top:1px;white-space:nowrap}
+.due.sp{font-size:20px;letter-spacing:-.01em;margin-top:3px}
+.ph{height:28px;padding:0 20px;border-top:1px dashed var(--perf);display:flex;align-items:center;font-size:13.5px}
+.pass.late .ph{font-weight:600;font-size:14px}
+/* devolvido parcialmente: metade esquerda da tira em tinta */
+.pass.part .card{overflow:hidden}
+.pass.part .ph{background:linear-gradient(90deg,var(--ink) 50%,#fff 50%);border-top-color:var(--g2)}
+.pass.part .ph span{color:#fff;mix-blend-mode:difference;font-weight:600}
+
+/* ===== navegação ===== */
+.nv{display:grid;grid-template-columns:repeat(4,1fr)}
+.nv button{min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:11.5px;color:var(--g1);position:relative}
+.nv button.on{color:var(--ink);font-weight:600}
+.ct{position:absolute;top:6px;left:calc(50% + 12px);font-size:11.5px;font-weight:600;color:var(--ink)}
+
+/* ===== celular: lista ao fundo + folha ===== */
+.m{height:100%;display:flex;flex-direction:column;padding:6px 24px 0}
+.m .hd{margin-top:8px}
+.under{position:absolute;inset:0;padding:6px 24px 0;opacity:.55}
+.scrim{position:absolute;inset:0;background:rgba(20,20,20,.3);z-index:2}
+.sheet{position:absolute;left:0;right:0;top:60px;bottom:0;z-index:5;background:#fff;border-radius:24px 24px 0 0;padding:0 24px;box-shadow:0 -12px 32px rgba(20,20,20,.14);
+  animation:folha .8s var(--ease) backwards;display:flex;flex-direction:column}
+@keyframes folha{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
+.handle{width:40px;height:4px;border-radius:4px;background:var(--g2);margin:10px auto 0}
+.sheet h2{font-size:26px;letter-spacing:-.02em;line-height:1.15;margin-top:22px}
+.sheet .sub{font-size:14.5px;color:var(--g1);margin-top:4px}
+.sheet .gl{margin-top:44px;margin-bottom:4px}
+.rows{list-style:none}
+.rows>li{border-top:1px solid var(--g3);padding:0}
+.rows>li:last-child{border-bottom:1px solid var(--g3)}
+.row{display:flex;align-items:center;gap:14px;min-height:56px}
+.row .nm{font-size:16px;font-weight:600;flex:1}
+.row .st{display:flex;align-items:center;gap:2px;font-size:15px;min-height:44px}
+.row .st .ic{width:16px;height:16px;stroke-width:2}
+.row.off .nm{font-weight:400;color:var(--g1)}
+.row.off .st{color:var(--g1)}
+.dano{font-size:13px;font-weight:600;padding:0 0 12px 36px;margin-top:-6px}
+.chk{-webkit-appearance:none;appearance:none;width:22px;height:22px;margin:0;flex:none;border:1.5px solid var(--ink);border-radius:6px;background:#fff;cursor:pointer}
+.chk:checked{background:var(--ink) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m5 12 5 5 9-10'/%3E%3C/svg%3E") center/15px no-repeat}
+.chk.off{border-color:var(--g2)}
+.res{font-size:15px;line-height:1.5;margin-top:32px}
+.sheet .btn{margin-top:auto}
+.sheet .lk{align-self:center;margin-top:8px;margin-bottom:26px}
+
+/* ===== computador ===== */
+.dk{height:100%;display:grid;grid-template-columns:88px 380px 1fr;grid-template-rows:44px 1fr;column-gap:40px;padding:24px 48px 0}
+.dk .brand{grid-row:1;grid-column:1;font-size:14px;font-weight:600;display:flex;align-items:center;white-space:nowrap}
+.dk .side{grid-row:2;grid-column:1;display:flex;flex-direction:column;gap:4px;padding-top:30px}
+.dk .side button{min-height:62px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;font-size:12px;color:var(--g1);position:relative}
+.dk .side button.on{color:var(--ink);font-weight:600}
+.dk .side .ct{top:8px;font-size:12px}
+.dk .tb{grid-row:1;grid-column:2/4;display:flex;justify-content:space-between;align-items:center}
+.dk .tb .btn{height:44px;padding:0 18px;border-radius:12px;font-size:14.5px}
+.dk .tb .dl{width:340px;border:0}
+.dk .lc{grid-row:2;grid-column:2;padding-top:20px;min-width:0}
+.dk .lc .fi{margin:6px 0 10px}
+.dk .fc{grid-row:2;grid-column:3;border-left:1px solid var(--g3);padding:56px 0 0 56px;min-width:0;animation:desliza .8s var(--ease) .3s backwards}
+@keyframes desliza{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.fc h3{font-size:46px;letter-spacing:-.03em;line-height:1.05}
+.fc .who{font-size:18px;color:var(--g1);margin-top:8px}
+.fc .sit{margin-top:36px;font-size:30px;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.fc .sub{font-size:15px;color:var(--g1);margin-top:4px}
+.it{list-style:none;margin-top:30px}
+.it li{display:flex;align-items:center;gap:14px;min-height:46px;border-top:1px solid var(--g3);font-size:16px}
+.it li:last-child{border-bottom:1px solid var(--g3)}
+.it .mk{width:12px;height:12px;border-radius:50%;background:var(--ink);flex:none}
+.it .mk.e{background:#fff;border:1.5px solid var(--ink)}
+.it .semi{font-weight:600}
+.it .gr{color:var(--g1)}
+.it .tag{font-size:12px;font-weight:600;border:1px solid var(--ink);border-radius:6px;padding:0 7px;line-height:20px}
+.ac{display:flex;gap:12px;margin-top:36px}
+.ac .btn{padding:0 24px;font-size:15px}
+.fc .lks{display:flex;gap:26px;margin-top:8px}
+
+/* ===== outras peças ===== */
+.extras{margin-top:56px}
+.extras>h2{font-size:12.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--g1);margin:0 0 16px 4px}
+.qs{display:flex;gap:28px;flex-wrap:wrap;justify-content:center}
+.q{display:flex;flex-direction:column;gap:10px}
+.q>small{font-size:13px;font-weight:600;color:var(--ink);margin-left:4px}
+.qf{width:360px;height:300px;background:#fff;border-radius:20px;box-shadow:0 0 0 1px var(--g2);padding:28px;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.qf.sc{background:var(--g3);align-items:center;justify-content:center;padding:24px}
+.dlg{background:#fff;border-radius:18px;padding:24px;box-shadow:0 0 0 1px var(--g2),0 10px 28px rgba(20,20,20,.08);width:100%}
+.dlg p{font-size:17px;line-height:1.45;font-weight:600;letter-spacing:-.005em}
+.dlg .bt{display:flex;gap:10px;margin-top:22px}
+.dlg .btn{flex:1;height:48px;font-size:15px;padding:0}
+.qf h3{font-size:34px;letter-spacing:-.025em;line-height:1.1}
+.qf .who{font-size:16px;color:var(--g1);margin-top:4px}
+.qf .sit{font-size:30px;font-weight:600;letter-spacing:-.02em;margin-top:26px;line-height:1.15}
+.qf .sub{font-size:14.5px;color:var(--g1);margin-top:2px}
+.qf .btn{margin-top:auto;padding:0 22px;align-self:flex-start;height:48px;font-size:15px}
+.qf h4{font-size:30px;font-weight:600;letter-spacing:-.025em;line-height:1.1;margin:0}
+.qf .tx{font-size:14.5px;color:var(--g1);margin-top:10px;line-height:1.5}
+.acr{margin-top:auto;border-top:1px solid var(--g3)}
+.acr button{display:flex;align-items:center;justify-content:space-between;width:100%;min-height:56px;font-size:16px;font-weight:600;border-bottom:1px solid var(--g3)}
+.acr .ic{width:18px;height:18px;stroke-width:2}
+
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+ <defs>
+  <symbol id="i-loan" viewBox="0 0 24 24"><path d="M4 8h14m-4-4 4 4-4 4M20 16H6m4 4-4-4 4-4"/></symbol>
+  <symbol id="i-box" viewBox="0 0 24 24"><path d="M3 7.5 12 3l9 4.5v9L12 21l-9-4.5zM3 7.5 12 12l9-4.5M12 12v9"/></symbol>
+  <symbol id="i-users" viewBox="0 0 24 24"><path d="M9 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7zM2.5 20c0-3.3 2.9-6 6.5-6s6.5 2.7 6.5 6M16 4.3a3.5 3.5 0 0 1 0 6.4M18 14.3c2 .7 3.5 2.6 3.5 5.2"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 17v-6a6 6 0 0 1 12 0v6l1.5 2h-15zM10 21h4"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 24 24"><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6zM19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-6-6 6 6-6 6"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+ </defs>
+</svg>
+
+<main class="page">
+ <h1>Carteira monocromática — com as funções da v2</h1>
+ <p class="lead">O mesmo design, agora com itens, devolução parcial, reaparecimento, sugestão de bloqueio e backup.</p>
+
+ <div class="frames">
+
+  <!-- ============ CELULAR: folha de devolução ============ -->
+  <section class="fw" aria-label="Celular">
+   <div class="fl">Celular</div>
+   <div class="pw"><div class="phone">
+     <div class="under" aria-hidden="true">
+      <div class="dl"><strong>12/11/2026</strong><div class="cm"><button>−1 dia</button><button>+1 dia</button><button>+7 dias</button><button>Hoje</button></div></div>
+     </div>
+     <div class="scrim"></div>
+
+     <div class="sheet" role="dialog" aria-label="Registrar devolução">
+      <div class="handle"></div>
+      <h2>Registrar devolução</h2>
+      <p class="sub">PlayStation 5 · com Marcos Tavares</p>
+
+      <p class="gl">O que voltou</p>
+      <ul class="rows">
+       <li>
+        <label class="row"><input class="chk" type="checkbox" checked aria-label="Console voltou"><span class="nm">Console</span><button class="st" aria-label="Estado: Danificado">Danificado<svg class="ic"><use href="#i-chev"/></svg></button></label>
+        <p class="dano">Saiu Bom, voltou Danificado: dano neste item.</p>
+       </li>
+       <li><label class="row"><input class="chk" type="checkbox" checked aria-label="Controle 1 voltou"><span class="nm">Controle 1</span><button class="st" aria-label="Estado: Bom">Bom<svg class="ic"><use href="#i-chev"/></svg></button></label></li>
+       <li><label class="row off"><input class="chk off" type="checkbox" aria-label="Controle 2 voltou"><span class="nm">Controle 2</span><span class="st">não voltou</span></label></li>
+      </ul>
+
+      <p class="res">Falta 1 item: Controle 2. O empréstimo fica <b>Devolvido parcialmente</b>.</p>
+
+      <button class="btn">Registrar devolução</button>
+      <button class="lk">Cancelar</button>
+     </div>
+   </div></div>
+  </section>
+
+  <!-- ============ COMPUTADOR ============ -->
+  <section class="fw" aria-label="Computador">
+   <div class="fl">Computador</div>
+   <div class="pw d"><div class="desk"><div class="dk">
+     <div class="brand">Empresta Aí</div>
+     <nav class="side" aria-label="Navegação">
+      <button class="on"><svg class="ic"><use href="#i-loan"/></svg>Empréstimos</button>
+      <button><svg class="ic"><use href="#i-box"/></svg>Objetos</button>
+      <button><svg class="ic"><use href="#i-users"/></svg>Amigos</button>
+      <button><svg class="ic"><use href="#i-bell"/></svg>Avisos<span class="ct" aria-label="3 avisos">3</span></button>
+      <button><svg class="ic"><use href="#i-gear"/></svg>Ajustes</button>
+     </nav>
+
+     <div class="tb">
+      <button class="btn"><svg class="ic"><use href="#i-plus"/></svg>Novo empréstimo</button>
+      <div class="dl"><strong>12/11/2026</strong><div class="cm"><button>−1 dia</button><button>+1 dia</button><button>+7 dias</button><button>Hoje</button></div></div>
+     </div>
+
+     <section class="lc" aria-label="Lista de empréstimos">
+      <div class="hd"><h2>Empréstimos</h2><span>5 fora · 2 atrasados</span></div>
+      <div class="fi"><button class="on"><span>Atrasados</span><i style="font-style:normal">2</i></button><button class="on"><span>Ativos</span><i style="font-style:normal">3</i></button><button><span>Encerrados</span><i style="font-style:normal">3</i></button></div>
+      <div class="grp">
+       <p class="gl">Atrasados</p>
+       <div class="stack">
+        <article class="pass late" style="--i:0" tabindex="0" aria-label="Serra Tico-Tico com Carla Souza, 5 dias de atraso">
+         <div class="card"><div class="top"><div><h3>Serra Tico-Tico</h3><p>com Carla Souza</p></div><span class="due">04/11</span></div>
+          <div class="ph">5 dias de atraso</div></div>
+        </article>
+        <article class="pass late" style="--i:1" tabindex="0" aria-label="Barraca Nautika com Pedro Lima, 30 dias de atraso">
+         <div class="card"><div class="top"><div><h3>Barraca Nautika</h3><p>com Pedro Lima</p></div><span class="due">10/10</span></div>
+          <div class="ph">30 dias de atraso</div></div>
+        </article>
+       </div>
+      </div>
+      <div class="grp">
+       <p class="gl">Ativos</p>
+       <div class="stack">
+        <article class="pass part sel" style="--i:2" tabindex="0" aria-current="true" aria-label="PlayStation 5 com Marcos Tavares, devolvido parcialmente, falta 1 item: Controle 2">
+         <div class="card"><div class="top"><div><h3>PlayStation 5</h3><p>com Marcos Tavares</p></div><span class="due">20/11</span></div>
+          <div class="ph"><span>Falta 1 item: Controle 2</span></div></div>
+        </article>
+        <article class="pass" style="--i:3" tabindex="0" aria-label="Furadeira Bosch com Carla Souza, faltam 4 dias">
+         <div class="card"><div class="top"><div><h3>Furadeira Bosch</h3><p>com Carla Souza</p></div><span class="due">16/11</span></div>
+          <div class="ph">Faltam 4 dias</div></div>
+        </article>
+        <article class="pass" style="--i:4" tabindex="0" aria-label="Livro Dom Casmurro com Pedro Lima, sem prazo">
+         <div class="card"><div class="top"><div><h3>Livro Dom Casmurro</h3><p>com Pedro Lima</p></div><span class="due sp">Sem prazo</span></div>
+          <div class="ph">Sem prazo</div></div>
+        </article>
+       </div>
+      </div>
+     </section>
+
+     <article class="fc" aria-label="Ficha do empréstimo: PlayStation 5">
+      <h3>PlayStation 5</h3>
+      <p class="who">com Marcos Tavares</p>
+      <p class="sit">Devolvido parcialmente</p>
+      <p class="sub">Falta 1 item. O prazo é 20/11/2026.</p>
+      <ul class="it">
+       <li><span class="mk"></span><span class="semi">Console — voltou Danificado (saiu Bom)</span><span class="tag">dano</span></li>
+       <li><span class="mk"></span><span>Controle 1 — voltou Bom</span></li>
+       <li><span class="mk e"></span><span class="gr">Controle 2 — falta</span></li>
+      </ul>
+      <div class="ac"><button class="btn">Registrar devolução</button><button class="btn o">Marcar como perdido</button></div>
+      <div class="lks"><a class="lk" href="#" onclick="return false">Renovar</a><a class="lk" href="#" onclick="return false">Ver detalhes<svg class="ic"><use href="#i-arrow"/></svg></a></div>
+     </article>
+   </div></div></div>
+  </section>
+
+ </div>
+
+ <section class="extras" aria-label="Outras peças da v2">
+  <h2>Outras peças da v2</h2>
+  <div class="qs">
+
+   <div class="q"><small>Sugestão de bloqueio</small>
+    <div class="qf sc">
+     <div class="dlg" role="dialog" aria-label="Sugestão de bloqueio">
+      <p>Pedro Lima teve 1 perda nos últimos 12 meses. Bloquear novos empréstimos?</p>
+      <div class="bt"><button class="btn">Bloquear</button><button class="btn o">Agora não</button></div>
+     </div>
+    </div>
+   </div>
+
+   <div class="q"><small>Objeto reapareceu</small>
+    <div class="qf">
+     <h3>Barraca Nautika</h3>
+     <p class="who">com Pedro Lima</p>
+     <p class="sit">Perdido</p>
+     <p class="sub">Perda em 10/11/2026.</p>
+     <button class="btn o">Objeto reapareceu</button>
+    </div>
+   </div>
+
+   <div class="q"><small>Backup</small>
+    <div class="qf">
+     <h4>Backup</h4>
+     <p class="tx">O backup contém dados pessoais dos seus amigos. Guarde-o em local seguro.</p>
+     <div class="acr">
+      <button>Exportar backup<svg class="ic"><use href="#i-arrow"/></svg></button>
+      <button>Importar backup<svg class="ic"><use href="#i-arrow"/></svg></button>
+     </div>
+    </div>
+   </div>
+
+  </div>
+ </section>
+
+ <dl class="notes">
+  <div><dt>Itens</dt><dd>Cada item tem o seu estado; o dano aparece na linha do item, em palavras.</dd></div>
+  <div><dt>Parcial</dt><dd>O passe meio preenchido diz que parte já voltou.</dd></div>
+  <div><dt>Formulário</dt><dd>No celular é uma folha que sobe; no computador ocupa o lugar da ficha.</dd></div>
+ </dl>
+</main>
+</body>
+</html>

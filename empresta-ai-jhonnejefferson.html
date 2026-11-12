@@ -1,0 +1,1726 @@
+<!--
+  Empresta Aí — Protótipo
+  Aluno: Jhonne Jefferson
+  Spec usada: spec.md (revisão de 12/11/2026) e spec-design.md (12/11/2026)
+  Recorte: MVP (seção 2.3 da spec.md). Regras e cenários marcados [v2] não foram implementados.
+  Ferramenta de IA: Claude Code (Claude)
+
+  LACUNAS ENCONTRADAS
+  L01 — Seção 5.1 (RN02, "Hoje" do glossário) e spec-design RD46: a spec trabalha com hora (aviso às 09:00, prazo até 23:59:59, "aviso só se ainda não passou das 09:00"), mas o protótipo só tem dia simulado.
+        Decisão tomada no protótipo: o controle anda só em dias. Ao entrar num dia, considera-se que já passou das 09:00; por isso o aviso do próprio dia do registro nunca é enviado e "até 23:59:59 do dia da criação" (RN75) vale para o mesmo dia simulado. "Hoje" no controle volta para a data do computador.
+  L02 — Seção 5.5 (RN22) e glossário ("Dias de atraso"): a spec não diz o que acontece quando a data simulada volta para trás (isso não existe no celular, só no protótipo).
+        Decisão tomada no protótipo: o empréstimo Atrasado continua Atrasado (nunca volta a Ativo), os dias de atraso valem no mínimo 1, os avisos já entregues ficam registrados (a tela Avisos só mostra os que têm data até a data simulada) e nada é entregue de novo ao avançar outra vez.
+  L03 — Seção 5.6 (RN29, RN31) e HU09: o navegador não agenda notificações do celular, e a spec não diz o que acontece com os avisos que "chegariam" enquanto a permissão está negada.
+        Decisão tomada no protótipo: a tela Avisos mostra "Entregues" (os que já chegariam até a data simulada) e "Próximos" (fila de 60, com os avisos de prazo dos próximos 7 dias primeiro). Com "Simular notificações negadas" ligado a faixa da RN31 aparece e nenhum aviso novo é entregue; os dias passados nesse período não são entregues depois.
+  L04 — Seção 5.1 (RN74) e HU03: a RN74 dá o padrão "Informe <o campo>", mas a spec não lista os campos nem trata alguns erros. Faltam textos para: objeto e amigo não escolhidos, estado não escolhido, data prevista vazia, contestação vazia, data de saída fora da faixa digitada à mão, data prevista fora da faixa (modo calendário), telefone com letras e motivo de bloqueio acima de 200 caracteres.
+        Decisão tomada no protótipo: "Informe o objeto", "Informe o amigo", "Informe o estado de conservação", "Informe a data prevista", "Informe a contestação", "A data de saída deve ser de hoje até 30 dias antes", "O prazo deve ser de 1 a 90 dias" (data fora da faixa), a mesma mensagem do telefone ("Telefone deve ter 10 ou 11 dígitos com DDD") e "O motivo pode ter no máximo 200 caracteres".
+  L05 — Seção 5.4 (RN20) e HU04: a spec não dá a mensagem de erro de "Definir prazo" fora de 1 a 90 dias.
+        Decisão tomada no protótipo: a mesma do prazo inicial, "O prazo deve ser de 1 a 90 dias"; a data prevista é hoje + N.
+  L06 — Seção 5.11 (RN75) e HU12: a spec não diz se definir prazo (RN20) impede excluir o empréstimo registrado por engano, nem dá o texto da confirmação.
+        Decisão tomada no protótipo: definir prazo não impede (só renovação e devolução impedem, como a RN75 diz). Confirmação: "Excluir o empréstimo de <objeto> com <amigo>? Isso não pode ser desfeito." com "Confirmar" e "Cancelar".
+  L07 — Seção 5.2 (RN04): o estado de conservação só pode ser editado sem empréstimo em aberto, mas a spec não diz como isso aparece.
+        Decisão tomada no protótipo: o grupo de estado fica desabilitado, com a linha de apoio "O estado não pode ser editado enquanto o objeto está emprestado."
+  L08 — Seção 5.13 (RN70): "quantos ficaram Atrasados" não diz se conta o empréstimo que já foi devolvido.
+        Decisão tomada no protótipo: conta todo empréstimo que alguma vez ficou Atrasado (tem data_atrasado), mesmo depois de devolvido ou perdido.
+  L09 — Seção 5.8 (RN45, RN46) e 5.10 (RN53): a spec dá as regras de trocar o desfecho, editar a contestação e editar o motivo do bloqueio, mas não nomeia as ações.
+        Decisão tomada no protótipo: "Trocar desfecho", "Registrar contestação" (vira "Editar contestação" quando já existe), "Editar motivo do bloqueio", "Editar", "Registrar devolução", "Silenciar avisos" e "Reativar avisos".
+  L10 — Seção 5.2 (RN09) e 5.3 (RN14): a spec não diz o que mostrar quando nenhum objeto ou nenhum amigo pode ser escolhido num novo empréstimo.
+        Decisão tomada no protótipo: "Nenhum objeto disponível" e "Nenhum amigo disponível".
+  L11 — Seção 5.5 (RN23), 5.13 (RN68) e spec-design seção 11: textos de passe e ficha que a spec não define: "Faltam <N> dias" / "Falta 1 dia" / "Vence hoje", "com <amigo>", "<F> fora · <A> atrasados", "O prazo é/era dd/mm/aaaa.", "Emprestado em dd/mm/aaaa.", rótulos da linha do tempo, "Mais ações", "Ver detalhes", data abreviada dd/mm com o ano só quando difere.
+        Decisão tomada no protótipo: usei exatamente os textos da seção 11 do spec-design; na tolerância a linha de apoio é "O prazo era dd/mm/aaaa.".
+  L12 — Seção 5.7, 5.9, 5.11, 5.12 (RN48, RN57, RN59, RN64, RN65) e spec-design seção 11: a spec não nomeia os botões de vários diálogos nem diz o que acontece ao descartar um formulário preenchido, e não define o texto de sucesso.
+        Decisão tomada no protótipo: "Confirmar" e "Cancelar"; "Entendi" nas mensagens de bloqueio; "Descartar o que foi preenchido?" com "Descartar" e "Continuar preenchendo"; faixa de resultado "Feito: <o que foi feito>".
+  L13 — Seção 5.6 (RN29, RN30, RN31), HU09 e spec-design seção 11: textos da tela Avisos e do controle de data, que são do protótipo e não do app.
+        Decisão tomada no protótipo: "Entregues", "Próximos", "Nenhum aviso", "Simular notificações negadas", "Restaurar dados de exemplo" (com a confirmação "Restaurar os dados de exemplo? Tudo o que foi cadastrado será apagado."), e os comandos "−1 dia", "+1 dia", "+7 dias" e "Hoje".
+  L14 — Seção 5.2 (RN04), 5.8 (RN38, RN40) e spec-design RD49: a spec permite foto mas não dá os textos do campo nem diz como guardá-la no navegador.
+        Decisão tomada no protótipo: "Adicionar foto", "Trocar", "Remover", legendas "Foto do objeto", "Na saída" e "Na volta". A foto é reduzida (até 640 px, JPEG) e guardada no localStorage; se não couber, o registro é salvo sem ela e o app avisa.
+  L15 — Seção 5.13 (RN67, RN68) e spec-design seção 11: a spec só define "Nenhum empréstimo atrasado" para listas vazias.
+        Decisão tomada no protótipo: "Nenhum empréstimo ativo", "Nenhum empréstimo encerrado", "Nenhum objeto cadastrado", "Nenhum amigo cadastrado" e, no computador sem ficha, "Escolha um empréstimo para ver os detalhes." (e as versões para objeto e amigo).
+  L16 — Seção 5.2, 5.3 e 5.13 (RN69, RN70): a spec não define o que as listas e fichas de objeto e de amigo mostram além das regras.
+        Decisão tomada no protótipo: linhas simples com nome e situação ("Disponível", "Emprestado", "Perdido", "Bloqueado"; "Disponível · Inutilizado" quando for o caso); ficha com a frase de situação, ações e o histórico em passes, com as linhas da RN69 abaixo de cada passe; telefone mostrado como (DD) NNNNN-NNNN.
+  L17 — Seção 6 (HU03, HU04) e spec-design RD18: a spec não diz como o formulário de novo empréstimo se divide nem os rótulos dos campos.
+        Decisão tomada no protótipo: três passos na mesma folha (objeto, amigo, prazo e estado), "Passo n de 3", "Voltar", e uma linha auxiliar "Data prevista: dd/mm/aaaa" / "Nova data prevista: dd/mm/aaaa" calculada abaixo do campo.
+-->
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Empresta Aí</title>
+<!-- RD03 / RD38: fontes por CDN; sem internet cai para a fonte do sistema -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;600&family=Manrope:wght@400;600&display=swap" rel="stylesheet">
+<style>
+/* ============================================================
+   RD01 — uma tinta só: nenhum matiz em nenhum elemento.
+   As cores da tela são só estas cinco; as fotos são a única exceção (RD49).
+   ============================================================ */
+*,*::before,*::after{box-sizing:border-box}
+:root{
+  --tinta:#141414;      /* RD01 */
+  --cinza-1:#5F5F5B;
+  --cinza-2:#C4C4BF;
+  --cinza-3:#ECECE8;
+  --papel:#FFFFFF;
+  --ease:cubic-bezier(.16,1,.3,1);   /* RD35: curva única, sem quique */
+  color-scheme:light;
+}
+html{-webkit-text-size-adjust:100%;font-size:100%}
+body{margin:0;background:var(--papel);color:var(--tinta);font:400 1rem/1.5 Geist,Manrope,system-ui,-apple-system,"Segoe UI",sans-serif;font-variant-numeric:tabular-nums;overflow-x:hidden}  /* RD03 */
+button,input,textarea,select{font:inherit;color:inherit}
+button{border:0;background:none;cursor:pointer;padding:0;text-align:inherit}
+h1,h2,h3,p,dl,dd,dt,ol,ul{margin:0;padding:0;font-weight:400}
+h1,h2,h3,b,strong{font-weight:600}
+ul,ol{list-style:none}
+[hidden]{display:none!important}
+.ic{width:24px;height:24px;fill:currentColor;flex:none}   /* RD07: Phosphor regular, 24 px */
+:focus-visible{outline:2px solid var(--tinta);outline-offset:3px}  /* RD11 */
+.so-leitor{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+input,textarea,select{accent-color:#141414}
+
+/* ===== estrutura: celular (RD39) ===== */
+#app{display:grid;height:100vh;height:100dvh;grid-template-columns:minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto auto;grid-template-areas:"dl" "lista" "novo" "nav"}
+.brand{display:none}
+.dl{grid-area:dl;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;column-gap:8px;min-height:44px;padding:0 24px;border-bottom:1px solid var(--cinza-3)}  /* RD27 */
+.dl strong{font-size:.875rem}
+.dl .cm{display:flex;flex-wrap:wrap}
+.dl .cm button{min-height:44px;padding:0 8px;font-size:.8125rem;letter-spacing:.02em;color:var(--cinza-1)}
+.dl .cm button:last-child{color:var(--tinta);font-weight:600;padding-right:0}
+.dl .cm button:hover{color:var(--tinta)}
+#lista{grid-area:lista;overflow-y:auto;padding:6px 24px 16px;min-width:0;-webkit-overflow-scrolling:touch}
+#novo{grid-area:novo;margin:8px 24px}
+#nav{grid-area:nav;display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--cinza-3);background:var(--papel)}
+#nav button{min-height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;font-size:.72rem;color:var(--cinza-1);position:relative}
+#nav button.on{color:var(--tinta);font-weight:600}
+#nav .ct{position:absolute;top:6px;left:calc(50% + 12px);font-size:.72rem;font-weight:600;color:var(--tinta)}  /* RD26: algarismo sem círculo */
+
+/* ===== cabeçalho da lista, filtros ===== */
+.faixa{font-size:.875rem;color:var(--cinza-1);padding:10px 0 2px}   /* RD24 */
+.hd{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-top:8px}
+.hd h2{font-size:2rem;letter-spacing:-.025em;line-height:1.15}   /* RD03 */
+.hd span{font-size:.875rem;color:var(--cinza-1)}
+.fi{display:flex;flex-wrap:wrap;column-gap:22px;margin:2px 0 6px}   /* RD28 */
+.fi button{min-height:44px;font-size:.9rem;color:var(--cinza-1);display:flex;align-items:center;gap:6px}
+.fi button i{font-style:normal}
+.fi button.on{color:var(--tinta);font-weight:600}
+.fi button.on span{text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:7px}
+.gl{font-size:.6875rem;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--cinza-1);margin:0 0 8px}   /* RD03 */
+.grp+.grp{margin-top:20px}
+.stack{display:flex;flex-direction:column;gap:12px}   /* RD04: 12 px entre passes */
+.vazio{font-size:.9rem;color:var(--cinza-1);text-align:center;padding:24px 0}   /* RD31 */
+
+/* ===== botões (RD25) ===== */
+.btn{min-height:52px;border-radius:14px;background:var(--tinta);color:var(--papel);display:flex;align-items:center;justify-content:center;gap:10px;font-size:1rem;font-weight:600;padding:0 24px;text-align:center;transition:transform .12s var(--ease)}
+.btn:active{transform:scale(.98)}   /* RD34: o botão cede */
+.btn .ic{width:20px;height:20px}
+.btn.o{background:var(--papel);color:var(--tinta);box-shadow:inset 0 0 0 1.5px var(--tinta)}
+.btn[disabled]{background:var(--cinza-3);color:var(--cinza-1);box-shadow:none;pointer-events:none}
+.lk{min-height:44px;display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:.9rem;text-decoration:underline;text-underline-offset:5px;text-decoration-thickness:1px;color:var(--tinta)}
+.lk .ic{width:16px;height:16px}
+
+/* ===== passe (RD08–RD12) ===== */
+.pass{--cut:56px;--bw:1px;--perf:var(--cinza-2);position:relative;border-radius:16px;cursor:pointer;transition:transform .2s var(--ease),filter .2s var(--ease)}
+.pass.entra{animation:sobe .4s var(--ease) backwards;animation-delay:calc(var(--i) * 60ms)}   /* RD34: no máximo 8 */
+@keyframes sobe{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.pass:active{transform:scale(.98)}
+.pass.sel{outline:2.5px solid var(--tinta);outline-offset:3px}   /* RD12 */
+.card{background:var(--papel);border:1px solid var(--cinza-2);border-radius:16px;position:relative;
+  -webkit-mask:radial-gradient(circle 8px at 0 calc(var(--cut) + var(--bw)),#0000 97%,#000) left/51% 100% no-repeat,radial-gradient(circle 8px at 100% calc(var(--cut) + var(--bw)),#0000 97%,#000) right/51% 100% no-repeat;
+  mask:radial-gradient(circle 8px at 0 calc(var(--cut) + var(--bw)),#0000 97%,#000) left/51% 100% no-repeat,radial-gradient(circle 8px at 100% calc(var(--cut) + var(--bw)),#0000 97%,#000) right/51% 100% no-repeat}  /* RD08: picote com entalhes de 8 px */
+.pass.tol{--bw:1.5px;--perf:var(--tinta)}
+.pass.tol .card{border:1.5px dashed var(--tinta)}   /* RD10: tolerância = tracejado */
+.pass.late{--bw:0px;--perf:rgba(255,255,255,.4)}
+.pass.late .card{background:var(--tinta);border:0;color:var(--papel)}   /* RD10: atrasado = invertido */
+.pass.enc{--bw:0px;--perf:var(--cinza-2)}
+.pass.enc .card{background:var(--cinza-3);border:0;color:var(--cinza-1)}   /* RD10: encerrado */
+.pass.perd h3{text-decoration:line-through}
+/* RD08 / seção 13: o entalhe do picote precisa aparecer também nos passes brancos */
+.pass::before,.pass::after{content:"";position:absolute;top:calc(var(--cut) + var(--bw) - 8px);width:8px;height:16px;border:1px solid var(--cinza-2);pointer-events:none}
+.pass::before{left:0;border-left:0;border-radius:0 8px 8px 0}
+.pass::after{right:0;border-right:0;border-radius:8px 0 0 8px}
+.pass.tol::before,.pass.tol::after{border-color:var(--tinta)}
+.pass.late::before,.pass.late::after,.pass.enc::before,.pass.enc::after{display:none}
+.top{min-height:56px;padding:13px 20px 12px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:4px 12px}
+.top>div{flex:1 1 8rem;min-width:0}
+.top h3{font-size:1.125rem;line-height:1.25;letter-spacing:-.01em;overflow-wrap:anywhere}
+.top p{font-size:.875rem;line-height:1.3;color:var(--cinza-1)}
+.pass.late .top p{color:var(--cinza-2)}
+.due{font-size:1.875rem;font-weight:600;line-height:1;letter-spacing:-.03em;margin-top:1px;white-space:nowrap;display:flex;flex-direction:column;align-items:flex-end}
+.due small{font-size:.875rem;font-weight:400;letter-spacing:0;line-height:1.2;color:var(--cinza-1)}
+.pass.late .due small{color:var(--cinza-2)}
+.due.sp{font-size:1.25rem;letter-spacing:-.01em;margin-top:3px}
+.ph{min-height:28px;padding:5px 20px;border-top:1px dashed var(--perf);display:flex;align-items:center;font-size:.875rem}
+.pass.late .ph{font-weight:600}
+.hist{margin:8px 4px 0;font-size:.8125rem;color:var(--cinza-1);line-height:1.5}
+.hist b{color:var(--tinta)}
+.item-hist+.item-hist{margin-top:20px}
+
+/* ===== linhas simples (RD32) ===== */
+.linhas{margin-top:8px}
+.linha{display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:56px;width:100%;border-top:1px solid var(--cinza-3)}
+.linha:last-child{border-bottom:1px solid var(--cinza-3)}
+.linha .nm{font-weight:600;overflow-wrap:anywhere}
+.linha .st{font-size:.875rem;color:var(--cinza-1);text-align:right;flex:none}
+.linha[aria-current=true]{box-shadow:inset 3px 0 0 var(--tinta);padding-left:12px}
+.linha.sem-borda{border-top:0}
+.av-linha{padding:12px 0;border-top:1px solid var(--cinza-3)}
+.av-linha:last-child{border-bottom:1px solid var(--cinza-3)}
+.av-linha small{display:block;font-size:.8125rem;color:var(--cinza-1)}
+.liga{display:flex;align-items:center;justify-content:space-between;min-height:56px;width:100%;border-top:1px solid var(--cinza-3);border-bottom:1px solid var(--cinza-3)}
+.liga span:last-child{font-weight:600;text-decoration:underline;text-underline-offset:5px}
+
+/* ===== painel: ficha (computador) e folha (celular) ===== */
+#painel{grid-area:painel;min-width:0}
+#scrim{display:none}
+.painel-int{max-width:520px}
+.alca{display:none}
+.fecha-linha{display:flex;justify-content:space-between;align-items:center;min-height:44px}
+.ficha h3.nome{font-size:1.875rem;letter-spacing:-.03em;line-height:1.1;overflow-wrap:anywhere}   /* RD03 */
+.ficha .quem{font-size:1.125rem;color:var(--cinza-1);margin-top:8px}
+.ficha .sit{margin-top:28px;font-size:1.75rem;font-weight:600;letter-spacing:-.02em;line-height:1.15}
+.ficha .sub{font-size:.9375rem;color:var(--cinza-1);margin-top:4px;overflow-wrap:anywhere}
+.tl{--n:3;display:flex;position:relative;margin-top:32px}   /* RD14 */
+.tl::before{content:"";position:absolute;left:6px;right:calc(100%/var(--n) - 6px);top:6px;height:1px;background:var(--tinta)}
+.tl li{flex:1 1 0;min-width:0;padding-top:26px;position:relative;font-size:.8125rem;line-height:1.35;color:var(--cinza-1);overflow-wrap:anywhere;padding-right:4px}
+.tl li::before{content:"";position:absolute;left:0;top:0;width:13px;height:13px;border-radius:50%;background:var(--papel);box-shadow:inset 0 0 0 1.5px var(--tinta)}
+.tl li.feito::before{background:var(--tinta)}
+.tl li.agora::before{background:var(--tinta);box-shadow:0 0 0 3px var(--papel),0 0 0 4.5px var(--tinta)}
+.tl b{display:block;font-size:.9375rem;color:var(--tinta);margin-top:1px}
+.alerta{margin-top:24px;padding:14px 16px;border-radius:14px;box-shadow:inset 0 0 0 1.5px var(--tinta);font-weight:600}   /* RN25 */
+.ac{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.ac .btn{flex:1 1 11rem}
+.rn{margin-top:14px;font-size:.8125rem;color:var(--cinza-1)}   /* RD16 */
+.mais{margin-top:8px;display:flex;flex-direction:column;align-items:flex-start}
+.mais .lk{font-weight:400}
+.detalhes{margin-top:8px;border-top:1px solid var(--cinza-3);padding-top:8px}
+.detalhes dl>div{display:flex;justify-content:space-between;gap:16px;padding:8px 0;border-bottom:1px solid var(--cinza-3);font-size:.9rem}
+.detalhes dt{color:var(--cinza-1);flex:none}
+.detalhes dd{text-align:right;overflow-wrap:anywhere}
+.foto-ficha{margin-top:12px}
+.foto-ficha img{display:block;max-width:240px;width:100%;border-radius:14px}   /* RD49: foto colorida */
+.foto-ficha figcaption{font-size:.8125rem;color:var(--cinza-1);margin-top:4px}
+.res-amigo{margin-top:20px;font-size:.9375rem;color:var(--cinza-1)}
+.hist-titulo{margin-top:36px}
+.vazio-ficha{color:var(--cinza-1);padding-top:56px}   /* RD40 */
+
+/* ===== formulários (RD17–RD21, RD49) ===== */
+.form h2{font-size:1.625rem;letter-spacing:-.02em;line-height:1.15;margin-top:8px;overflow-wrap:anywhere}
+.form .ctx{font-size:.9rem;color:var(--cinza-1);margin-top:4px;overflow-wrap:anywhere}
+.corpo{margin-top:24px}
+.campo{margin-bottom:20px}
+.campo>label,.campo>.rotulo{display:block;font-size:.875rem;margin-bottom:6px}
+.campo input[type=text],.campo input[type=tel],.campo input[type=date],.campo textarea,.campo select{width:100%;min-height:52px;border:1px solid var(--cinza-2);border-radius:14px;padding:0 14px;background:var(--papel);font-size:1rem}
+.campo textarea{padding:12px 14px;min-height:96px;resize:vertical}
+.campo input:focus,.campo textarea:focus,.campo select:focus{outline:none;border-color:var(--tinta);box-shadow:0 0 0 .5px var(--tinta)}
+.campo [aria-invalid=true]{border-color:var(--tinta);box-shadow:0 0 0 1px var(--tinta)}   /* RD20 */
+.campo .erro{margin-top:6px;font-weight:600;font-size:.9rem}
+.campo .ajuda{margin-top:6px;font-size:.8125rem;color:var(--cinza-1)}
+.opcoes{display:flex;flex-wrap:wrap;gap:8px}
+.op{min-height:44px;padding:0 16px;border-radius:14px;box-shadow:inset 0 0 0 1px var(--cinza-2);font-size:.9375rem}
+.op[aria-checked=true]{box-shadow:inset 0 0 0 2.5px var(--tinta);font-weight:600}   /* RD05 */
+.op[disabled]{color:var(--cinza-1);background:var(--cinza-3);pointer-events:none}
+.escolha{margin-top:8px}
+.foto-campo{display:flex;align-items:center;gap:16px}
+.foto-caixa{width:96px;height:96px;border:1.5px dashed var(--cinza-1);border-radius:14px;display:flex;align-items:center;justify-content:center;text-align:center;font-size:.8125rem;color:var(--cinza-1);cursor:pointer;padding:6px}
+.foto-caixa input{position:absolute;width:1px;height:1px;opacity:0}
+.foto-caixa:focus-within{outline:2px solid var(--tinta);outline-offset:3px}
+.foto-mini{width:96px;height:96px;object-fit:cover;border-radius:14px}
+.foto-acoes{display:flex;flex-direction:column}
+.rodape{margin-top:28px;padding-bottom:24px;display:flex;flex-direction:column;align-items:stretch;gap:4px}
+.rodape .lk{align-self:center}
+.preview{font-size:.9375rem;margin:-8px 0 20px;color:var(--cinza-1);min-height:1.5em}
+.passo{display:flex;align-items:center;justify-content:space-between}
+
+/* ===== diálogo (RD22) e faixa de resultado (RD23) ===== */
+#dlg-fundo{position:fixed;inset:0;background:rgba(20,20,20,.3);display:flex;align-items:center;justify-content:center;z-index:100;padding:24px}
+.dlg{background:var(--papel);width:100%;max-width:360px;border-radius:16px;padding:24px;animation:dlg .2s var(--ease)}
+@keyframes dlg{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:none}}
+.dlg p{margin-bottom:20px;overflow-wrap:anywhere}
+.dlg .botoes{display:flex;flex-direction:column;gap:8px}
+#toast{position:fixed;left:50%;bottom:150px;transform:translate(-50%,8px);max-width:min(92vw,420px);background:var(--papel);color:var(--tinta);box-shadow:0 0 0 1px var(--cinza-2);border-radius:14px;padding:12px 18px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .25s var(--ease),transform .25s var(--ease);z-index:90;text-align:center}
+#toast.on{opacity:1;transform:translate(-50%,0)}
+
+/* ===== celular: ficha e formulário como folha (RD17, RD39) ===== */
+@media (max-width:899.98px){
+  #painel{position:fixed;left:0;right:0;top:60px;bottom:0;z-index:30;background:var(--papel);border-radius:24px 24px 0 0;box-shadow:0 -12px 32px rgba(20,20,20,.14);overflow-y:auto;overscroll-behavior:contain;padding:0 24px;display:none}  /* RD06 */
+  #painel.aberto{display:block;animation:folha .35s var(--ease)}
+  #painel.fechando{display:block;animation:folha-sai .2s var(--ease) forwards}
+  @keyframes folha{from{transform:translateY(100%)}to{transform:none}}
+  @keyframes folha-sai{from{transform:none}to{transform:translateY(100%)}}
+  #scrim{position:fixed;inset:0;background:rgba(20,20,20,.3);z-index:20;opacity:0;pointer-events:none;transition:opacity .35s var(--ease);display:block}
+  #scrim.on{opacity:1;pointer-events:auto}
+  .alca{display:block;width:100%;height:28px;position:relative;touch-action:none;cursor:grab}
+  .alca::after{content:"";position:absolute;left:50%;top:10px;width:40px;height:4px;border-radius:4px;background:var(--cinza-2);transform:translateX(-50%)}
+  .ficha h3.nome{font-size:1.875rem}
+}
+/* ===== computador (RD40, RD41) ===== */
+@media (min-width:900px){
+  #app{grid-template-columns:120px 380px minmax(0,1fr);grid-template-rows:64px minmax(0,1fr);grid-template-areas:"brand novo dl" "nav lista painel";column-gap:40px;padding:0 48px}
+  .brand{grid-area:brand;display:flex;align-items:center;font-size:.875rem;font-weight:600;white-space:nowrap}
+  .dl{padding:0;border-bottom:0;justify-self:end;width:340px;max-width:100%;align-self:center}
+  #novo{margin:0;align-self:center;min-height:44px;height:44px;padding:0 18px;border-radius:12px;font-size:.9rem;justify-self:start}
+  #nav{display:flex;flex-direction:column;gap:6px;padding-top:36px;border-top:0}
+  #nav button{min-height:64px;font-size:.75rem}
+  #lista{padding:12px 0 24px}
+  #painel{border-left:1px solid var(--cinza-3);padding:48px 0 48px 56px;overflow-y:auto}
+  #painel.entrando>.painel-int{animation:desliza .3s var(--ease)}
+  .ficha h3.nome{font-size:2.75rem;letter-spacing:-.03em;line-height:1.05}
+  .pass:hover{transform:translateY(-4px);filter:drop-shadow(0 8px 12px rgba(20,20,20,.06))}   /* RD06, RD34 */
+  .pass:hover:active{transform:scale(.98)}
+}
+@media (min-width:900px){#toast{bottom:32px}}
+@media (min-width:900px) and (max-width:1100px){
+  #app{grid-template-columns:72px 340px minmax(0,1fr);column-gap:24px;padding:0 24px}
+  #nav button{font-size:0;gap:0}
+  #nav button .ic{width:26px;height:26px}
+  #nav .ct{font-size:.72rem;left:calc(50% + 14px)}
+  #painel{padding-left:32px}
+}
+@keyframes desliza{from{opacity:0;transform:translateX(16px)}to{opacity:1;transform:none}}
+.troca{animation:fade .2s var(--ease)}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+/* RD36: com "reduzir movimento" nada se anima */
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+
+<!-- RD07: ícones Phosphor (regular), copiados para dentro do HTML (licença MIT) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+ <defs>
+  <symbol id="i-loan" viewBox="0 0 256 256"><path d="M213.66,181.66l-32,32a8,8,0,0,1-11.32-11.32L188.69,184H48a8,8,0,0,1,0-16H188.69l-18.35-18.34a8,8,0,0,1,11.32-11.32l32,32A8,8,0,0,1,213.66,181.66Zm-139.32-64a8,8,0,0,0,11.32-11.32L67.31,88H208a8,8,0,0,0,0-16H67.31L85.66,53.66A8,8,0,0,0,74.34,42.34l-32,32a8,8,0,0,0,0,11.32Z"/></symbol>
+  <symbol id="i-box" viewBox="0 0 256 256"><path d="M223.68,66.15,135.68,18a15.88,15.88,0,0,0-15.36,0l-88,48.17a16,16,0,0,0-8.32,14v95.64a16,16,0,0,0,8.32,14l88,48.17a15.88,15.88,0,0,0,15.36,0l88-48.17a16,16,0,0,0,8.32-14V80.18A16,16,0,0,0,223.68,66.15ZM128,32l80.34,44-29.77,16.3-80.35-44ZM128,120,47.66,76l33.9-18.56,80.34,44ZM40,90l80,43.78v85.79L40,175.82Zm176,85.78h0l-80,43.79V133.82l32-17.51V152a8,8,0,0,0,16,0V107.55L216,90v85.77Z"/></symbol>
+  <symbol id="i-users" viewBox="0 0 256 256"><path d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 256 256"><path d="M221.8,175.94C216.25,166.38,208,139.33,208,104a80,80,0,1,0-160,0c0,35.34-8.26,62.38-13.81,71.94A16,16,0,0,0,48,200H88.81a40,40,0,0,0,78.38,0H208a16,16,0,0,0,13.8-24.06ZM128,216a24,24,0,0,1-22.62-16h45.24A24,24,0,0,1,128,216ZM48,184c7.7-13.24,16-43.92,16-80a64,64,0,1,1,128,0c0,36.05,8.28,66.73,16,80Z"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H136v80a8,8,0,0,1-16,0V136H40a8,8,0,0,1,0-16h80V40a8,8,0,0,1,16,0v80h80A8,8,0,0,1,224,128Z"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 256 256"><path d="M221.66,133.66l-72,72a8,8,0,0,1-11.32-11.32L196.69,136H40a8,8,0,0,1,0-16H196.69L138.34,61.66a8,8,0,0,1,11.32-11.32l72,72A8,8,0,0,1,221.66,133.66Z"/></symbol>
+  <symbol id="i-back" viewBox="0 0 256 256"><path d="M224,128a8,8,0,0,1-8,8H59.31l58.35,58.34a8,8,0,0,1-11.32,11.32l-72-72a8,8,0,0,1,0-11.32l72-72a8,8,0,0,1,11.32,11.32L59.31,120H216A8,8,0,0,1,224,128Z"/></symbol>
+ </defs>
+</svg>
+
+<div id="app">
+  <div class="brand">Empresta Aí</div>
+
+  <!-- RD27 / RD46: controle de data simulada, sempre visível (enunciado da Etapa 2) -->
+  <div class="dl" role="group" aria-label="Data simulada">
+    <strong id="dl-data" aria-live="polite"></strong>
+    <div class="cm">
+      <button type="button" data-acao="data" data-delta="-1">−1 dia</button>
+      <button type="button" data-acao="data" data-delta="1">+1 dia</button>
+      <button type="button" data-acao="data" data-delta="7">+7 dias</button>
+      <button type="button" data-acao="data" data-delta="hoje">Hoje</button>
+    </div>
+  </div>
+
+  <main id="lista" aria-label="Lista"></main>
+
+  <!-- RD30: único botão cheio da tela -->
+  <button type="button" class="btn" id="novo" data-acao="novo"></button>
+
+  <!-- RD26: quatro destinos -->
+  <nav id="nav" aria-label="Navegação">
+    <button type="button" data-acao="nav" data-tela="emprestimos" aria-label="Empréstimos"><svg class="ic" aria-hidden="true"><use href="#i-loan"/></svg>Empréstimos</button>
+    <button type="button" data-acao="nav" data-tela="objetos" aria-label="Objetos"><svg class="ic" aria-hidden="true"><use href="#i-box"/></svg>Objetos</button>
+    <button type="button" data-acao="nav" data-tela="amigos" aria-label="Amigos"><svg class="ic" aria-hidden="true"><use href="#i-users"/></svg>Amigos</button>
+    <button type="button" data-acao="nav" data-tela="avisos" aria-label="Avisos"><svg class="ic" aria-hidden="true"><use href="#i-bell"/></svg>Avisos<span class="ct" id="ct-avisos"></span></button>
+  </nav>
+
+  <div id="scrim" data-acao="fechar-painel"></div>
+  <section id="painel" role="region" aria-label="Detalhes"><div id="painel-conteudo"></div></section>
+</div>
+
+<div id="dlg-fundo" hidden><div class="dlg" role="alertdialog" aria-modal="true" aria-labelledby="dlg-texto"><p id="dlg-texto"></p><div class="botoes" id="dlg-botoes"></div></div></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<noscript>Este protótipo precisa de JavaScript.</noscript>
+
+<script>
+'use strict';
+/* ====================================================================
+   Empresta Aí — protótipo (MVP). Um objeto de estado no localStorage,
+   funções pequenas com nomes em português, sem classes e sem framework.
+   RD37 / RD38: a biblioteca Motion não é usada; o movimento é CSS e
+   Web Animations API, então tudo funciona sem internet.
+   ==================================================================== */
+
+// ---------- constantes das regras ----------
+var CHAVE = 'empresta-ai:v1';
+var ESTADOS = ['Novo', 'Bom', 'Desgastado', 'Danificado', 'Inutilizado'];   // RN07
+var CATEGORIAS = [                                                          // RN06
+  { nome: 'Livros e revistas', prazo: 14 }, { nome: 'Jogos', prazo: 14 },
+  { nome: 'Filmes e música', prazo: 7 },    { nome: 'Ferramentas', prazo: 7 },
+  { nome: 'Eletrônicos', prazo: 7 },        { nome: 'Roupas e acessórios', prazo: 7 },
+  { nome: 'Esporte e lazer', prazo: 14 },   { nome: 'Casa e cozinha', prazo: 7 },
+  { nome: 'Outros', prazo: 14 }
+];
+var DESFECHOS = ['Sem ação', 'Reparo combinado', 'Reposição combinada', 'Resolvido'];   // RN45
+var MSG_FOTO = 'A foto deve ser JPG ou PNG de até 10 MB';                    // RN04, RN74
+var MESES = ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro', 'outubro', 'novembro', 'dezembro'];
+
+var estado = null;     // todos os dados (vão para o localStorage)
+var ui = {             // só o que está na tela; não é gravado
+  tela: 'emprestimos', filtro: 'padrao', arquivados: { objetos: false, amigos: false },
+  sel: null, voltar: null, form: null, mais: false, detalhes: false,
+  chaveAnterior: '', focoOrigem: null, painelAberto: false
+};
+var timerToast = null, timerPainel = null, dialogoCancelar = null, focoDialogo = null;
+
+// ---------- utilidades ----------
+function $(id) { return document.getElementById(id); }
+function esc(t) { return String(t === null || t === undefined ? '' : t).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
+function limpar(t) { return String(t === null || t === undefined ? '' : t).trim(); }          // RN03
+function semAcento(t) { return String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase(); }
+function inteiroEntre(t, min, max) { t = limpar(t); if (!/^\d+$/.test(t)) return null; var n = parseInt(t, 10); return (n >= min && n <= max) ? n : null; }
+function plural(n, um, varios) { return n === 1 ? um : varios; }                              // RN73
+function diasTexto(n) { return n + ' ' + plural(n, 'dia', 'dias'); }                         // RN73
+function ehCelular() { return window.matchMedia ? window.matchMedia('(max-width: 899.98px)').matches : false; }   // RD39
+function reduzido() { return window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false; }   // RD36
+
+// ---------- datas (RN02): sempre texto aaaa-mm-dd, só dias ----------
+function paraDias(iso) { var p = iso.split('-'); return Math.round(Date.UTC(+p[0], +p[1] - 1, +p[2]) / 86400000); }
+function deDias(n) { return new Date(n * 86400000).toISOString().slice(0, 10); }
+function somarDias(iso, n) { return deDias(paraDias(iso) + n); }                // calendário real: 31/01 + 30 = 02/03
+function diferencaDias(a, b) { return paraDias(a) - paraDias(b); }              // a − b
+function formatarData(iso) { var p = iso.split('-'); return p[2] + '/' + p[1] + '/' + p[0]; }   // RN02: dd/mm/aaaa
+function formatarCurta(iso) { var p = iso.split('-'); return p[2] + '/' + p[1]; }                 // RD09
+function dataPorExtenso(iso) { var p = iso.split('-'); return (+p[2]) + ' de ' + MESES[+p[1] - 1] + ' de ' + p[0]; }
+function dataDoComputador() { var d = new Date(); return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0'); }
+function dataValida(t) { return /^\d{4}-\d{2}-\d{2}$/.test(t || '') && deDias(paraDias(t)) === t; }
+function hoje() { return estado.dataSimulada; }     // RD27: toda regra usa a data simulada
+
+// ---------- gravação (RN62: só no aparelho; seção 10: tudo ou nada) ----------
+function carregar() {
+  try { var t = localStorage.getItem(CHAVE); if (t) { var d = JSON.parse(t); if (d && d.versao === 1) return d; } } catch (e) { }
+  return null;
+}
+function salvar() {
+  try { localStorage.setItem(CHAVE, JSON.stringify(estado)); return true; } catch (e) { return false; }   // setItem grava inteiro ou nada
+}
+// RD49 / LACUNA L14: se a foto não couber no localStorage, grava sem ela e avisa
+function gravar(fotos) {
+  if (salvar()) return '';
+  var perdeu = false;
+  (fotos || []).forEach(function (f) { if (f.obj[f.campo]) { delete f.obj[f.campo]; perdeu = true; } });
+  salvar();
+  return perdeu ? ' A foto não coube no armazenamento do navegador e não foi guardada.' : '';
+}
+
+// ---------- consultas ----------
+function buscar(lista, id) { for (var i = 0; i < lista.length; i++) { if (lista[i].id === id) return lista[i]; } return null; }
+function novoId(p) { estado.seq += 1; return p + estado.seq; }
+function rank(est) { return ESTADOS.indexOf(est) + 1; }
+function emAberto(e) { return e.estado === 'Ativo' || e.estado === 'Atrasado'; }     // glossário: Em aberto (MVP)
+function emprestimosDoObjeto(id) { return estado.emprestimos.filter(function (e) { return e.objeto_id === id; }); }
+function emprestimosDoAmigo(id) { return estado.emprestimos.filter(function (e) { return e.amigo_id === id; }); }
+function emprestimoAbertoDoObjeto(id) { return emprestimosDoObjeto(id).filter(emAberto)[0] || null; }
+function devolucaoDe(e) { return estado.devolucoes.filter(function (d) { return d.emprestimo_id === e.id; })[0] || null; }
+function renovacaoDe(e) { return estado.renovacoes.filter(function (r) { return r.emprestimo_id === e.id; })[0] || null; }
+function categoriaDe(nome) { return CATEGORIAS.filter(function (c) { return c.nome === nome; })[0]; }
+function porNome(a, b) { return a.localeCompare(b, 'pt-BR'); }
+
+// RN08: situação do objeto, calculada e nunca gravada
+function situacaoObjeto(o) {
+  if (emprestimoAbertoDoObjeto(o.id)) return 'Emprestado';
+  var lista = emprestimosDoObjeto(o.id);
+  var ultimo = null;
+  lista.forEach(function (e) { if (!ultimo || e.criado_em > ultimo.criado_em) ultimo = e; });
+  if (ultimo && ultimo.estado === 'Perdido') return 'Perdido';   // MVP: nenhum item volta, então Perdido é final
+  return 'Disponível';
+}
+// RN44: dano = estado na volta pior que o da saída
+function temDano(e) {
+  if (e.estado !== 'Devolvido') return false;
+  var d = devolucaoDe(e);
+  return !!d && rank(d.estado) > rank(e.estado_saida);
+}
+// glossário: dias de atraso = hoje − (data prevista + 3), mínimo 1 (RN22, LACUNA L02)
+function diasDeAtraso(e) { return Math.max(1, diferencaDias(hoje(), somarDias(e.data_prevista, 3))); }
+// RN23: dias que faltam para ficar atrasado, só no 1º ao 3º dia depois da data prevista
+function diasDeTolerancia(e) {
+  if (e.estado !== 'Ativo' || !e.data_prevista) return 0;
+  var depois = diferencaDias(hoje(), e.data_prevista);
+  return (depois >= 1 && depois <= 3) ? diferencaDias(somarDias(e.data_prevista, 4), hoje()) : 0;
+}
+function nomeObjeto(e) { var o = buscar(estado.objetos, e.objeto_id); return o ? o.nome : ''; }
+function nomeAmigo(e) { var a = buscar(estado.amigos, e.amigo_id); return a ? a.nome : ''; }
+
+// RN22: Ativo vira Atrasado às 00:00 do dia data prevista + 4; nunca volta (LACUNA L02)
+function atualizarEstados() {
+  var mudou = false;
+  estado.emprestimos.forEach(function (e) {
+    if (e.estado === 'Ativo' && e.data_prevista && diferencaDias(hoje(), e.data_prevista) >= 4) {   // RN19: sem prazo nunca atrasa
+      e.estado = 'Atrasado'; e.data_atrasado = somarDias(e.data_prevista, 4); mudou = true;
+    }
+  });
+  return mudou;
+}
+
+// ---------- listas (RN67) ----------
+function listaAtivos() {   // por data prevista; sem prazo por último, pela data de saída; empate: nome do objeto
+  return estado.emprestimos.filter(function (e) { return e.estado === 'Ativo'; }).sort(function (a, b) {
+    if (!a.data_prevista && !b.data_prevista) return (diferencaDias(a.data_saida, b.data_saida)) || porNome(nomeObjeto(a), nomeObjeto(b));
+    if (!a.data_prevista) return 1;
+    if (!b.data_prevista) return -1;
+    return diferencaDias(a.data_prevista, b.data_prevista) || porNome(nomeObjeto(a), nomeObjeto(b));
+  });
+}
+function listaAtrasados() {   // mais dias de atraso primeiro
+  return estado.emprestimos.filter(function (e) { return e.estado === 'Atrasado'; }).sort(function (a, b) {
+    return (diasDeAtraso(b) - diasDeAtraso(a)) || porNome(nomeObjeto(a), nomeObjeto(b));
+  });
+}
+function listaEncerrados() {   // data de encerramento decrescente
+  return estado.emprestimos.filter(function (e) { return e.estado === 'Devolvido' || e.estado === 'Perdido'; }).sort(function (a, b) {
+    return diferencaDias(b.data_encerramento, a.data_encerramento) || porNome(nomeObjeto(a), nomeObjeto(b));
+  });
+}
+
+// ---------- RN68 / RD10: situação do passe (forma + frase) ----------
+function situacaoDoEmprestimo(e) {
+  if (e.estado === 'Atrasado') return { classe: 'late', frase: diasTexto(diasDeAtraso(e)) + ' de atraso' };
+  if (e.estado === 'Devolvido') return { classe: 'enc', frase: 'Devolvido em ' + formatarData(e.data_encerramento) + (temDano(e) ? ' · Com dano' : '') };
+  if (e.estado === 'Perdido') return { classe: 'enc perd', frase: 'Perdido' };
+  if (!e.data_prevista) return { classe: '', frase: 'Sem prazo' };
+  var t = diasDeTolerancia(e);
+  if (t > 0) return { classe: 'tol', frase: 'Em tolerância — fica atrasado em ' + diasTexto(t) };   // RN23
+  var falta = diferencaDias(e.data_prevista, hoje());
+  // LACUNA L11: frase do empréstimo dentro do prazo (RD10)
+  if (falta === 0) return { classe: '', frase: 'Vence hoje' };
+  return { classe: '', frase: plural(falta, 'Falta ', 'Faltam ') + diasTexto(falta) };
+}
+
+/* ====================================================================
+   AVISOS (RN26–RN31, HU09, RD47, RD48)  — LACUNA L01, LACUNA L03
+   ==================================================================== */
+// dia do aviso de atraso: 1º ao 7º dia de atraso e depois a cada 7 dias (RN27)
+function diaDoAvisoDeAtraso(i) { return i < 7 ? i + 1 : (i - 5) * 7; }
+// gera os avisos de um empréstimo com data depois de "depoisDe" e até "ate"
+function gerarAvisos(e, depoisDe, ate, maximo) {
+  var lista = [];
+  function por(data, tipo, n) {
+    if (lista.length < maximo && diferencaDias(data, depoisDe) > 0 && diferencaDias(data, ate) <= 0 && diferencaDias(data, e.data_saida) > 0) {
+      lista.push({ empId: e.id, data: data, tipo: tipo, n: n, lido: false });
+    }
+  }
+  if (e.data_prevista) {
+    por(somarDias(e.data_prevista, -1), 'amanha', 0);        // RN26: véspera às 09:00
+    por(e.data_prevista, 'hoje', 0);                          // RN26: no dia às 09:00
+    for (var i = 0; i < 400; i++) {                           // RN27: atraso diário nos 7 primeiros dias, depois a cada 7
+      var d = diaDoAvisoDeAtraso(i);
+      var data = somarDias(e.data_prevista, 3 + d);
+      if (diferencaDias(data, ate) > 0 || lista.length >= maximo) break;
+      por(data, 'atraso', d);
+    }
+  } else {
+    for (var k = 1; k < 400; k++) {                           // RN28: lembrete a cada 30 dias sem prazo
+      var dia = somarDias(e.data_saida, 30 * k);
+      if (diferencaDias(dia, ate) > 0 || lista.length >= maximo) break;
+      por(dia, 'semprazo', 30 * k);
+    }
+  }
+  return lista;
+}
+function textoDoAviso(a) {
+  var e = buscar(estado.emprestimos, a.empId);
+  if (!e) return '';
+  var o = nomeObjeto(e), am = nomeAmigo(e);
+  if (a.tipo === 'amanha') return o + ' com ' + am + ': devolução amanhã (' + formatarData(somarDias(a.data, 1)) + ').';   // RN26
+  if (a.tipo === 'hoje') return o + ' com ' + am + ': devolução hoje.';                                                   // RN26
+  if (a.tipo === 'atraso') return o + ' com ' + am + ': ' + diasTexto(a.n) + ' de atraso.';                              // RN27
+  return o + ' está com ' + am + ' há ' + diasTexto(a.n) + '.';                                                           // RN28
+}
+function chaveDoAviso(a) { return a.empId + '|' + a.data + '|' + a.tipo; }
+// RD47: entrega os avisos que "chegariam" quando a data simulada anda. Em dia já registrado nada é reenviado (LACUNA L02)
+// LACUNA L01: só dias; ao entrar num dia já passou das 09:00
+function entregarAvisos() {
+  var h = hoje(), de = estado.avisosAte;
+  if (diferencaDias(h, de) <= 0) return;
+  if (!estado.avisosNegados) {                                    // RN31 / LACUNA L03: negadas = nada chega
+    var ja = {};
+    estado.avisos.forEach(function (a) { ja[chaveDoAviso(a)] = true; });
+    estado.emprestimos.forEach(function (e) {
+      if (!emAberto(e) || e.avisos_silenciados) return;           // RN30: encerrado ou silenciado não avisa
+      gerarAvisos(e, de, h, 400).forEach(function (a) { if (!ja[chaveDoAviso(a)]) estado.avisos.push(a); });
+    });
+  }
+  estado.avisosAte = h;
+}
+// RN29: fila de 60: avisos de prazo dos próximos 7 dias primeiro, depois os mais próximos
+function filaDeAvisos() {
+  var h = hoje(), todos = [];
+  estado.emprestimos.forEach(function (e) {
+    if (emAberto(e) && !e.avisos_silenciados) todos = todos.concat(gerarAvisos(e, h, somarDias(h, 3650), 60));
+  });
+  function porData(a, b) { return diferencaDias(a.data, b.data); }
+  var limite = somarDias(h, 7);
+  var prazo = todos.filter(function (a) { return (a.tipo === 'amanha' || a.tipo === 'hoje') && diferencaDias(a.data, limite) <= 0; }).sort(porData);
+  var resto = todos.filter(function (a) { return prazo.indexOf(a) < 0; }).sort(porData);
+  return prazo.concat(resto).slice(0, 60).sort(porData);
+}
+function avisosEntregues() {
+  return estado.avisos.filter(function (a) { return diferencaDias(a.data, hoje()) <= 0; }).sort(function (a, b) { return diferencaDias(b.data, a.data); });
+}
+function avisosNaoLidos() { return avisosEntregues().filter(function (a) { return !a.lido; }).length; }   // RD26
+
+/* ====================================================================
+   DADOS DE EXEMPLO (relativos ao dia em que o app abre pela 1ª vez)
+   ==================================================================== */
+function inserirObjeto(nome, categoria, est) {
+  var o = { id: novoId('o'), nome: nome, categoria: categoria, estado_atual: est, foto: null, arquivado: false, criado_em: estado.seq };
+  estado.objetos.push(o); return o;
+}
+function inserirAmigo(nome, telefone, observacao) {
+  var a = { id: novoId('a'), nome: nome, telefone: telefone || '', observacao: observacao || '', bloqueado: false, motivo_bloqueio: '', arquivado: false, anonimizado: false, criado_em: estado.seq };
+  estado.amigos.push(a); return a;
+}
+function inserirEmprestimo(o, a, saida, prevista, estadoSaida, fotoSaida) {
+  var e = {
+    id: novoId('e'), objeto_id: o.id, amigo_id: a.id, data_saida: saida, data_prevista: prevista || null,
+    prazo_definido_depois: false, estado: 'Ativo', estado_saida: estadoSaida, foto_saida: fotoSaida || null,
+    renovacoes: 0, avisos_silenciados: false, data_atrasado: null, data_encerramento: null, desfecho_dano: null,
+    contestacao: null, data_perda: null, perda_revertida: false, criado_em: estado.seq, criado_dia: hoje(),
+    estado_objeto_antes: o.estado_atual                                          // RN75
+  };
+  o.estado_atual = estadoSaida;                                                  // RN38: o estado atual do objeto muda junto
+  estado.emprestimos.push(e); return e;
+}
+// RN39, RN40, RN44, RN45: devolução completa (sempre a data de hoje)
+function aplicarDevolucao(e, estadoVolta, desfecho, foto, data) {
+  var o = buscar(estado.objetos, e.objeto_id);
+  e.estado = 'Devolvido'; e.data_encerramento = data;
+  var d = { id: novoId('d'), emprestimo_id: e.id, data: data, criado_em: estado.seq, estado: estadoVolta, foto: foto || null, origem: 'Normal' };
+  estado.devolucoes.push(d);
+  o.estado_atual = estadoVolta;                                                  // RN40
+  e.desfecho_dano = rank(estadoVolta) > rank(e.estado_saida) ? desfecho : null;  // RN45
+  return d;
+}
+// RN48, RN49: perda
+function aplicarPerda(e, data) { e.estado = 'Perdido'; e.data_perda = data; e.data_encerramento = data; }
+
+function semear() {
+  var base = dataDoComputador();
+  estado = { versao: 1, dataSimulada: base, seq: 0, objetos: [], amigos: [], emprestimos: [], renovacoes: [], devolucoes: [], avisos: [],
+             avisosAte: somarDias(base, -45), avisosNegados: false, config: { contador_anonimizacao: 0 } };   // seção 8: Configuracao
+  function dia(n) { return somarDias(base, n); }
+  var carla = inserirAmigo('Carla Souza', '86999990001', '');
+  var pedro = inserirAmigo('Pedro Lima', '86999998888', 'Vizinho do bloco B.');
+  inserirAmigo('Ana Reis', '', '');                                       // amigo sem empréstimo
+  var marcos = inserirAmigo('Marcos Tavares', '86988887777', '');
+  var furadeira = inserirObjeto('Furadeira Bosch', 'Ferramentas', 'Bom');
+  var serra = inserirObjeto('Serra Tico-Tico', 'Ferramentas', 'Bom');
+  var barraca = inserirObjeto('Barraca Nautika', 'Esporte e lazer', 'Bom');
+  var catan = inserirObjeto('Jogo Catan', 'Jogos', 'Bom');
+  var livro = inserirObjeto('Livro Dom Casmurro', 'Livros e revistas', 'Bom');
+  var martelo = inserirObjeto('Martelo', 'Ferramentas', 'Bom');
+  var liquid = inserirObjeto('Liquidificador', 'Casa e cozinha', 'Bom');
+  var violao = inserirObjeto('Violão', 'Filmes e música', 'Bom');
+  inserirObjeto('Caixa de som JBL', 'Eletrônicos', 'Novo');               // objeto sem empréstimo
+  inserirObjeto('Ventilador de mesa', 'Casa e cozinha', 'Inutilizado');   // objeto Inutilizado
+  // Perdido (Pedro)
+  estado.dataSimulada = dia(-100);
+  var l1 = inserirEmprestimo(violao, pedro, dia(-100), dia(-93), 'Bom');
+  aplicarPerda(l1, dia(-60));
+  // Devolvido com dano, desfecho Reparo combinado (Marcos)
+  estado.dataSimulada = dia(-45);
+  var l2 = inserirEmprestimo(liquid, marcos, dia(-45), dia(-38), 'Bom');
+  aplicarDevolucao(l2, 'Danificado', 'Reparo combinado', null, dia(-36));
+  // Devolvido sem dano (Carla)
+  estado.dataSimulada = dia(-20);
+  var l3 = inserirEmprestimo(martelo, carla, dia(-20), dia(-13), 'Bom');
+  aplicarDevolucao(l3, 'Bom', null, null, dia(-14));
+  // Atrasado há 31 dias (Pedro)
+  estado.dataSimulada = dia(-48);
+  inserirEmprestimo(barraca, pedro, dia(-48), dia(-34), 'Bom');
+  // Sem prazo (Pedro)
+  estado.dataSimulada = dia(-20);
+  inserirEmprestimo(livro, pedro, dia(-20), null, 'Bom');
+  // Atrasado há 5 dias (Carla)
+  estado.dataSimulada = dia(-15);
+  inserirEmprestimo(serra, carla, dia(-15), dia(-8), 'Bom');
+  // Em tolerância (Marcos)
+  estado.dataSimulada = dia(-16);
+  inserirEmprestimo(catan, marcos, dia(-16), dia(-2), 'Bom');
+  // Ativo no prazo (Carla)
+  estado.dataSimulada = dia(-3);
+  inserirEmprestimo(furadeira, carla, dia(-3), dia(4), 'Bom');
+  estado.dataSimulada = base;
+  atualizarEstados();
+  entregarAvisos();                                                       // gera o histórico de avisos já entregues
+  estado.avisos.forEach(function (a) { a.lido = diferencaDias(a.data, base) < -1; });
+  return estado;
+}
+
+/* ====================================================================
+   RN24: alerta ao escolher o amigo de um novo empréstimo
+   ==================================================================== */
+function textoDoAlerta(amigo) {
+  var h = hoje(), limite = somarDias(h, -365);
+  var atrasados = emprestimosDoAmigo(amigo.id).filter(function (e) { return e.estado === 'Atrasado'; })
+    .sort(function (a, b) { return diasDeAtraso(b) - diasDeAtraso(a); });
+  var perdas = 0, danos = 0;
+  emprestimosDoAmigo(amigo.id).forEach(function (e) {
+    if (e.estado === 'Perdido' && diferencaDias(e.data_perda, limite) >= 0 && diferencaDias(e.data_perda, h) <= 0) perdas++;
+    if (e.estado === 'Devolvido' && temDano(e) && diferencaDias(e.data_encerramento, limite) >= 0 && diferencaDias(e.data_encerramento, h) <= 0) danos++;
+  });
+  if (!atrasados.length && !perdas && !danos) return '';
+  var texto = amigo.nome + ' ';
+  if (atrasados.length) {
+    texto += 'tem ' + atrasados.length + ' ' + plural(atrasados.length, 'empréstimo atrasado', 'empréstimos atrasados') + ': ' +
+      atrasados.map(function (e) { return nomeObjeto(e) + ' (' + diasTexto(diasDeAtraso(e)) + ' de atraso)'; }).join(', ') + '. ';
+  }
+  if (perdas || danos) {
+    var partes = [];
+    if (perdas) partes.push(perdas + ' ' + plural(perdas, 'perda', 'perdas'));
+    if (danos) partes.push(danos + ' ' + plural(danos, 'devolução com dano', 'devoluções com dano'));
+    texto += (atrasados.length ? 'Teve ' : 'teve ') + partes.join(' e ') + ' nos últimos 12 meses. ';
+  }
+  return texto + 'Emprestar mesmo assim?';
+}
+
+/* ====================================================================
+   DIÁLOGO (RD22, RD45) E FAIXA DE RESULTADO (RD23)
+   ==================================================================== */
+function dialogo(texto, botoes) {
+  focoDialogo = document.activeElement;
+  $('dlg-texto').textContent = texto;
+  var caixa = $('dlg-botoes'); caixa.innerHTML = '';
+  botoes.forEach(function (b) {
+    var el = document.createElement('button');
+    el.type = 'button'; el.className = b.cheio ? 'btn' : 'btn o'; el.textContent = b.rotulo;
+    el.addEventListener('click', function () { fecharDialogo(); if (b.acao) b.acao(); });
+    caixa.appendChild(el);
+  });
+  dialogoCancelar = botoes[botoes.length - 1].acao || function () { };
+  $('dlg-fundo').hidden = false;
+  caixa.firstChild.focus();
+}
+function fecharDialogo() {
+  $('dlg-fundo').hidden = true;
+  if (focoDialogo && focoDialogo.focus && document.body.contains(focoDialogo)) focoDialogo.focus();   // RD22: o foco volta
+}
+function dialogoAberto() { return !$('dlg-fundo').hidden; }
+function aviso(texto) {                                   // RD23: 4 segundos, role=status
+  var t = $('toast'); t.textContent = texto; t.classList.add('on');
+  clearTimeout(timerToast);
+  timerToast = setTimeout(function () { t.classList.remove('on'); }, 4000);
+}
+function mensagemBloqueio(texto) { dialogo(texto, [{ rotulo: 'Entendi', cheio: false }]); }   // RD45 / LACUNA L12
+
+/* ====================================================================
+   ANIMAÇÃO (RD34–RD36): só transform e opacity, curva única
+   ==================================================================== */
+function animar(el, quadros, ms) {
+  if (reduzido() || !el || !el.animate) return;
+  el.animate(quadros, { duration: ms, easing: 'cubic-bezier(.16,1,.3,1)' });
+}
+function posicoesDosPasses() {
+  var mapa = {};
+  document.querySelectorAll('#lista .pass').forEach(function (p) {
+    var r = p.getBoundingClientRect(); mapa[p.dataset.id] = { x: r.left, y: r.top, forma: p.dataset.forma };
+  });
+  return mapa;
+}
+// RD36: passe que muda de forma troca com esmaecimento; o que muda de lugar desliza
+function animarMudancas(antes) {
+  document.querySelectorAll('#lista .pass').forEach(function (p) {
+    var a = antes[p.dataset.id]; if (!a) return;
+    var r = p.getBoundingClientRect();
+    if (a.forma !== p.dataset.forma) animar(p, [{ opacity: 0.2 }, { opacity: 1 }], 400);
+    var dx = a.x - r.left, dy = a.y - r.top;
+    if (dx || dy) animar(p, [{ transform: 'translate(' + dx + 'px,' + dy + 'px)' }, { transform: 'none' }], 400);
+  });
+}
+// o picote acompanha a altura da parte de cima do passe (RD42: a fonte cresce)
+function ajustarPicotes() {
+  document.querySelectorAll('.pass').forEach(function (p) {
+    var t = p.querySelector('.top'); if (t) p.style.setProperty('--cut', t.offsetHeight + 'px');
+  });
+}
+
+/* ====================================================================
+   COMPONENTES DE HTML
+   ==================================================================== */
+function icone(id) { return '<svg class="ic" aria-hidden="true"><use href="#' + id + '"/></svg>'; }
+
+// RD08–RD12: o passe
+function htmlPasse(e, i, entrada) {
+  var s = situacaoDoEmprestimo(e);
+  var due, dataExtenso;
+  if (e.data_prevista) {
+    var ano = e.data_prevista.slice(0, 4) !== hoje().slice(0, 4) ? e.data_prevista.slice(0, 4) : '';   // RD09
+    due = '<span class="due">' + formatarCurta(e.data_prevista) + (ano ? '<small>' + ano + '</small>' : '') + '</span>';
+    dataExtenso = 'data prevista ' + dataPorExtenso(e.data_prevista);
+  } else {
+    due = '<span class="due sp">Sem prazo</span>'; dataExtenso = 'sem prazo';
+  }
+  var sel = ui.sel && ui.sel.tipo === 'emprestimo' && ui.sel.id === e.id;
+  var rotulo = nomeObjeto(e) + ', com ' + nomeAmigo(e) + ', ' + s.frase + ', ' + dataExtenso;          // RD11
+  return '<div class="pass ' + s.classe + (sel ? ' sel' : '') + (entrada && i < 8 ? ' entra' : '') + '" style="--i:' + i + '" role="button" tabindex="0"' +
+    ' data-acao="abrir-emp" data-id="' + e.id + '" data-forma="' + esc(s.classe) + '" aria-label="' + esc(rotulo) + '"' + (sel ? ' aria-current="true"' : '') + '>' +
+    '<div class="card"><div class="top"><div><h3>' + esc(nomeObjeto(e)) + '</h3><p>com ' + esc(nomeAmigo(e)) + '</p></div>' + due + '</div>' +
+    '<div class="ph">' + esc(s.frase) + '</div></div></div>';
+}
+function htmlGrupo(rotulo, lista, vazio, entrada) {
+  var corpo = lista.length ? '<div class="stack">' + lista.map(function (e, i) { return htmlPasse(e, i, entrada); }).join('') + '</div>' : '<p class="vazio">' + vazio + '</p>';
+  return '<div class="grp"><p class="gl">' + rotulo + '</p>' + corpo + '</div>';
+}
+
+// RD19: campos
+function htmlErro(campo) {
+  var f = ui.form; if (!f || !f.erros[campo]) return '';
+  return '<p class="erro" id="e-' + campo + '" role="alert"><span class="so-leitor">Erro: </span>' + esc(f.erros[campo]) + '</p>';   // RD20
+}
+function atributosErro(campo) { return ui.form && ui.form.erros[campo] ? ' aria-invalid="true" aria-describedby="e-' + campo + '"' : ''; }
+function campoTexto(campo, rotulo, tipo, ajuda) {
+  var v = ui.form.dados[campo] === undefined ? '' : ui.form.dados[campo];
+  var ctl = tipo === 'textarea'
+    ? '<textarea id="f-' + campo + '" data-campo="' + campo + '" rows="3"' + atributosErro(campo) + '>' + esc(v) + '</textarea>'
+    : '<input id="f-' + campo + '" type="' + (tipo || 'text') + '" data-campo="' + campo + '" value="' + esc(v) + '" autocomplete="off"' + atributosErro(campo) + '>';
+  return '<div class="campo"><label for="f-' + campo + '">' + rotulo + '</label>' + ctl + (ajuda ? '<p class="ajuda">' + ajuda + '</p>' : '') + htmlErro(campo) + '</div>';
+}
+function campoNumero(campo, rotulo) {   // texto com teclado numérico: assim "91" chega até a validação
+  var v = ui.form.dados[campo] === undefined ? '' : ui.form.dados[campo];
+  return '<div class="campo"><label for="f-' + campo + '">' + rotulo + '</label><input id="f-' + campo + '" type="text" inputmode="numeric" data-campo="' + campo + '" value="' + esc(v) + '" autocomplete="off"' + atributosErro(campo) + '>' + htmlErro(campo) + '</div>';
+}
+function campoData(campo, rotulo, min, max) {
+  var v = ui.form.dados[campo] || '';
+  return '<div class="campo"><label for="f-' + campo + '">' + rotulo + '</label><input id="f-' + campo + '" type="date" data-campo="' + campo + '" value="' + esc(v) + '"' +
+    (min ? ' min="' + min + '"' : '') + (max ? ' max="' + max + '"' : '') + atributosErro(campo) + '>' + htmlErro(campo) + '</div>';   // RN74: só datas válidas
+}
+function grupoOpcoes(campo, rotulo, opcoes, bloqueado, nomeErro) {   // RD19: grupo em linha, não menu
+  var atual = ui.form.dados[campo];
+  var botoes = opcoes.map(function (o) {
+    return '<button type="button" class="op" role="radio" aria-checked="' + (atual === o ? 'true' : 'false') + '" data-acao="escolher" data-campo="' + campo + '" data-valor="' + esc(o) + '"' + (bloqueado ? ' disabled' : '') + '>' + esc(o) + '</button>';
+  }).join('');
+  return '<div class="campo"><span class="rotulo" id="r-' + campo + '">' + rotulo + '</span><div class="opcoes" role="radiogroup" aria-labelledby="r-' + campo + '"' + atributosErro(nomeErro || campo) + (ui.form.erros[nomeErro || campo] ? ' tabindex="-1"' : '') + '>' + botoes + '</div>' + htmlErro(nomeErro || campo) + '</div>';
+}
+function campoFoto(campo, rotulo) {   // RD49 / LACUNA L14
+  var foto = ui.form.dados[campo];
+  var corpo;
+  if (foto) {
+    corpo = '<div class="foto-campo"><img class="foto-mini" src="' + foto + '" alt="Miniatura da foto escolhida"><div class="foto-acoes">' +
+      '<label class="lk" for="f-' + campo + '">Trocar<input class="so-leitor" id="f-' + campo + '" type="file" accept="image/jpeg,image/png" data-foto="' + campo + '"></label>' +
+      '<button type="button" class="lk" data-acao="remover-foto" data-campo="' + campo + '">Remover</button></div></div>';
+  } else {
+    corpo = '<div class="foto-campo"><label class="foto-caixa" for="f-' + campo + '">Adicionar foto<input id="f-' + campo + '" type="file" accept="image/jpeg,image/png" data-foto="' + campo + '"></label></div>';
+  }
+  return '<div class="campo"><span class="rotulo">' + rotulo + '</span>' + corpo + htmlErro('foto_' + campo) + '</div>';
+}
+
+/* ====================================================================
+   LISTAS (telas)
+   ==================================================================== */
+function htmlListaEmprestimos(entrada) {
+  var atras = listaAtrasados(), ativos = listaAtivos(), enc = listaEncerrados();
+  var fora = atras.length + ativos.length;
+  var f = ui.filtro;
+  var faixa = estado.avisosNegados ? '<p class="faixa">Avisos desligados. Ative as notificações nas configurações do celular.</p>' : '';   // RN31, RD24
+  var html = faixa +
+    '<div class="hd"><h2>Empréstimos</h2><span>' + fora + ' fora · ' + atras.length + ' ' + plural(atras.length, 'atrasado', 'atrasados') + '</span></div>' +   // RD28 / LACUNA L11
+    '<div class="fi" role="group" aria-label="Filtros">' +
+    '<button type="button" data-acao="filtro" data-filtro="atrasados" class="' + (f === 'padrao' || f === 'atrasados' ? 'on' : '') + '" aria-pressed="' + (f === 'padrao' || f === 'atrasados') + '"><span>Atrasados</span><i>' + atras.length + '</i></button>' +
+    '<button type="button" data-acao="filtro" data-filtro="ativos" class="' + (f === 'padrao' || f === 'ativos' ? 'on' : '') + '" aria-pressed="' + (f === 'padrao' || f === 'ativos') + '"><span>Ativos</span><i>' + ativos.length + '</i></button>' +
+    '<button type="button" data-acao="filtro" data-filtro="encerrados" class="' + (f === 'encerrados' ? 'on' : '') + '" aria-pressed="' + (f === 'encerrados') + '"><span>Encerrados</span><i>' + enc.length + '</i></button></div>';
+  // RD29: visão padrão com os dois grupos; um filtro isola a lista
+  if (f === 'padrao') {
+    html += htmlGrupo('Atrasados', atras, 'Nenhum empréstimo atrasado', entrada) + htmlGrupo('Ativos', ativos, 'Nenhum empréstimo ativo', entrada);   // HU08, LACUNA L15
+  } else if (f === 'atrasados') {
+    html += htmlGrupo('Atrasados', atras, 'Nenhum empréstimo atrasado', entrada);
+  } else if (f === 'ativos') {
+    html += htmlGrupo('Ativos', ativos, 'Nenhum empréstimo ativo', entrada);
+  } else {
+    html += htmlGrupo('Encerrados', enc, 'Nenhum empréstimo encerrado', entrada);
+  }
+  return html;
+}
+function htmlListaObjetos() {
+  var arq = ui.arquivados.objetos;
+  var todos = estado.objetos.slice().sort(function (a, b) { return porNome(a.nome, b.nome); });
+  var lista = todos.filter(function (o) { return !!o.arquivado === arq; });
+  var qtdArq = todos.filter(function (o) { return o.arquivado; }).length;
+  var linhas = lista.map(function (o) {
+    var sit = situacaoObjeto(o) + (o.estado_atual === 'Inutilizado' ? ' · Inutilizado' : '');   // RD32 / LACUNA L16
+    var sel = ui.sel && ui.sel.tipo === 'objeto' && ui.sel.id === o.id;
+    return '<button type="button" class="linha" data-acao="abrir-obj" data-id="' + o.id + '"' + (sel ? ' aria-current="true"' : '') + '><span class="nm">' + esc(o.nome) + '</span><span class="st">' + sit + '</span></button>';
+  }).join('');
+  return '<div class="hd"><h2>Objetos</h2><span>' + lista.length + ' ' + plural(lista.length, 'objeto', 'objetos') + '</span></div>' +
+    '<div class="fi"><button type="button" data-acao="arquivados" class="' + (arq ? 'on' : '') + '" aria-pressed="' + arq + '"><span>Arquivados</span><i>' + qtdArq + '</i></button></div>' +
+    (lista.length ? '<div class="linhas">' + linhas + '</div>' : '<p class="vazio">' + (arq ? 'Nenhum objeto arquivado' : 'Nenhum objeto cadastrado') + '</p>');   // HU12 / LACUNA L15
+}
+function htmlListaAmigos() {
+  var arq = ui.arquivados.amigos;
+  var todos = estado.amigos.slice().sort(function (a, b) { return porNome(a.nome, b.nome); });
+  var lista = todos.filter(function (a) { return !!a.arquivado === arq; });
+  var qtdArq = todos.filter(function (a) { return a.arquivado; }).length;
+  var linhas = lista.map(function (a) {
+    var sel = ui.sel && ui.sel.tipo === 'amigo' && ui.sel.id === a.id;
+    return '<button type="button" class="linha" data-acao="abrir-ami" data-id="' + a.id + '"' + (sel ? ' aria-current="true"' : '') + '><span class="nm">' + esc(a.nome) + '</span><span class="st">' + (a.bloqueado ? 'Bloqueado' : '') + '</span></button>';
+  }).join('');
+  return '<div class="hd"><h2>Amigos</h2><span>' + lista.length + ' ' + plural(lista.length, 'amigo', 'amigos') + '</span></div>' +
+    '<div class="fi"><button type="button" data-acao="arquivados" class="' + (arq ? 'on' : '') + '" aria-pressed="' + arq + '"><span>Arquivados</span><i>' + qtdArq + '</i></button></div>' +
+    (lista.length ? '<div class="linhas">' + linhas + '</div>' : '<p class="vazio">' + (arq ? 'Nenhum amigo arquivado' : 'Nenhum amigo cadastrado') + '</p>');
+}
+function htmlTelaAvisos() {   // RD47, RD48 / LACUNA L03, LACUNA L13
+  var entregues = avisosEntregues(), proximos = filaDeAvisos();
+  function linha(a) { return '<li class="av-linha"><small>' + formatarData(a.data) + ' · 09:00</small>' + esc(textoDoAviso(a)) + '</li>'; }
+  return '<div class="hd"><h2>Avisos</h2></div>' +
+    '<button type="button" class="liga" data-acao="negadas" role="switch" aria-checked="' + estado.avisosNegados + '"><span>Simular notificações negadas</span><span>' + (estado.avisosNegados ? 'Ligado' : 'Desligado') + '</span></button>' +
+    '<div class="grp" style="margin-top:24px"><p class="gl">Entregues</p>' + (entregues.length ? '<ul>' + entregues.map(linha).join('') + '</ul>' : '<p class="vazio">Nenhum aviso</p>') + '</div>' +
+    '<div class="grp"><p class="gl">Próximos (' + proximos.length + ' de no máximo 60)</p>' + (proximos.length ? '<ul>' + proximos.map(linha).join('') + '</ul>' : '<p class="vazio">Nenhum aviso</p>') + '</div>' +
+    '<div style="margin-top:32px;text-align:center"><button type="button" class="lk" data-acao="restaurar" style="font-weight:400">Restaurar dados de exemplo</button></div>';
+}
+
+/* ====================================================================
+   FICHAS (RD13–RD16, RD33)
+   ==================================================================== */
+function botaoAcao(acao, rotulo, tipo) { return '<button type="button" class="btn' + (tipo === 'o' ? ' o' : '') + '" data-acao="' + acao + '">' + rotulo + '</button>'; }
+function linhaDef(rotulo, valor) { return '<div><dt>' + rotulo + '</dt><dd>' + valor + '</dd></div>'; }
+function htmlTopoFicha() {
+  var voltar = ui.voltar ? '<button type="button" class="lk" data-acao="voltar">' + icone('i-back') + 'Voltar</button>' : '<span></span>';
+  return '<div class="alca" aria-hidden="true"></div><div class="fecha-linha">' + voltar + '<button type="button" class="lk" data-acao="fechar">Fechar</button></div>';
+}
+
+// linhas de histórico (RN69): usadas nos detalhes e abaixo de cada passe
+function linhasDoEmprestimo(e) {
+  var l = [], r = renovacaoDe(e), d = devolucaoDe(e);
+  l.push(['Data de saída', formatarData(e.data_saida)]);
+  l.push(['Data prevista', e.data_prevista ? formatarData(e.data_prevista) : 'Sem prazo']);
+  if (e.data_prevista || e.renovacoes) l.push(['Renovações', e.renovacoes + ' de 1 ' + 'renovação']);   // HU04: "1 de 1 renovação"
+  if (r) l.push(['Renovado', 'de ' + formatarData(r.data_prevista_anterior) + ' para ' + formatarData(r.data_prevista_nova) + ' (+' + diasTexto(r.dias) + ')']);
+  if (e.prazo_definido_depois) l.push(['Prazo', 'definido depois da saída']);   // RN20
+  l.push(['Estado na saída', e.estado_saida]);
+  if (d) {
+    l.push(['Devolvido em', formatarData(d.data)]);
+    l.push(['Estado na volta', d.estado]);
+    l.push(['Dano', temDano(e) ? 'Com dano' : 'Sem dano']);
+  }
+  if (e.desfecho_dano) l.push(['Desfecho do dano', e.desfecho_dano]);
+  if (e.contestacao) l.push(['Contestação', esc(e.contestacao)]);
+  if (e.estado === 'Perdido') l.push(['Perda', 'Perda em ' + formatarData(e.data_perda)]);   // RN69
+  return l;
+}
+function htmlHistorico(lista, deQuem) {   // RD33 / HU10
+  if (!lista.length) return '<p class="vazio">Nenhum empréstimo</p>';
+  return lista.map(function (e, i) {
+    var linhas = linhasDoEmprestimo(e);
+    var amigo = deQuem === 'objeto' ? '<p><b>Amigo:</b> ' + esc(nomeAmigo(e)) + '</p>' : '<p><b>Objeto:</b> ' + esc(nomeObjeto(e)) + '</p>';
+    return '<div class="item-hist">' + htmlPasse(e, i, false) + '<div class="hist">' + amigo +
+      linhas.map(function (x) { return '<p><b>' + x[0] + ':</b> ' + (x[0] === 'Contestação' ? x[1] : esc(x[1])) + '</p>'; }).join('') + '</div></div>';
+  }).join('');
+}
+function linhaDoTempo(e) {   // RD14
+  var h = hoje(), pontos = [];
+  pontos.push(['Saída', e.data_saida]);
+  if (e.data_prevista) {
+    pontos.push(['Prazo', e.data_prevista]);
+    if (emAberto(e)) { pontos.push(['Tolerância até', somarDias(e.data_prevista, 3)]); pontos.push(['Atrasado desde', somarDias(e.data_prevista, 4)]); }
+    else if (e.data_atrasado) pontos.push(['Atrasado desde', e.data_atrasado]);
+  }
+  if (e.estado === 'Devolvido') pontos.push(['Devolvido', e.data_encerramento]);
+  if (e.estado === 'Perdido') pontos.push(['Perdido', e.data_perda]);
+  var ultimoFeito = -1;
+  pontos.forEach(function (p, i) { if (diferencaDias(p[1], h) <= 0 || !emAberto(e)) ultimoFeito = i; });
+  var rotulo = pontos.map(function (p) { return p[0] + ' ' + formatarCurta(p[1]); }).join(' · ');
+  var itens = pontos.map(function (p, i) {
+    var cls = i < ultimoFeito ? 'feito' : (i === ultimoFeito ? 'agora' : '');
+    return '<li class="' + cls + '">' + p[0] + '<b>' + formatarCurta(p[1]) + '</b></li>';
+  }).join('');
+  return '<ol class="tl" style="--n:' + pontos.length + '" aria-label="' + esc(rotulo) + '">' + itens + '</ol>';
+}
+function podeExcluirEmprestimo(e) { return e.estado === 'Ativo' && e.renovacoes === 0 && e.criado_dia === hoje(); }   // RN75, LACUNA L01 (dia, não hora), LACUNA L06 (definir prazo não impede)
+
+function htmlFichaEmprestimo(e) {
+  var s = situacaoDoEmprestimo(e), o = buscar(estado.objetos, e.objeto_id), a = buscar(estado.amigos, e.amigo_id);
+  var apoio;
+  if (e.estado === 'Atrasado') apoio = 'O prazo era ' + formatarData(e.data_prevista) + '.';
+  else if (e.estado === 'Ativo' && e.data_prevista) apoio = (diasDeTolerancia(e) > 0 ? 'O prazo era ' : 'O prazo é ') + formatarData(e.data_prevista) + '.';   // LACUNA L11
+  else if (e.estado === 'Ativo') apoio = 'Emprestado em ' + formatarData(e.data_saida) + '.';
+  else if (e.estado === 'Perdido') apoio = 'Perda em ' + formatarData(e.data_perda) + '.';
+  else apoio = 'Emprestado em ' + formatarData(e.data_saida) + '.';
+  var faixa = '';
+  if (e.estado === 'Atrasado' && diasDeAtraso(e) >= 30) faixa = '<p class="alerta">Atrasado há ' + diasTexto(diasDeAtraso(e)) + '. Marcar como perdido?</p>';   // RN25
+  // RD15: no máximo duas ações à vista
+  var principal = '', segunda = '', mais = [], motivo = '';
+  var silencio = e.avisos_silenciados ? ['reativar', 'Reativar avisos'] : ['silenciar', 'Silenciar avisos'];   // RN30
+  if (e.estado === 'Ativo') {
+    principal = botaoAcao('devolver', 'Registrar devolução');
+    if (e.data_prevista) { if (e.renovacoes < 1) segunda = botaoAcao('renovar', 'Renovar', 'o'); }          // RN33, RN34
+    else segunda = botaoAcao('definir-prazo', 'Definir prazo', 'o');                                       // RN19, RN20
+    mais.push(['perder', 'Marcar como perdido'], silencio);
+    if (podeExcluirEmprestimo(e)) mais.push(['excluir-emp', 'Excluir empréstimo']);
+  } else if (e.estado === 'Atrasado') {
+    principal = botaoAcao('devolver', 'Registrar devolução');
+    segunda = botaoAcao('perder', 'Marcar como perdido', 'o');
+    mais.push(silencio);
+    motivo = 'Empréstimo atrasado não pode ser renovado';   // HU04, RD16
+  } else if (e.estado === 'Devolvido' && temDano(e)) {
+    principal = botaoAcao('desfecho', 'Trocar desfecho');    // RN45
+    segunda = botaoAcao('contestar', e.contestacao ? 'Editar contestação' : 'Registrar contestação', 'o');   // RN46 / LACUNA L09
+  }
+  var det = '';
+  if (ui.detalhes) {   // RD13 item 7
+    var fotos = '';
+    if (o && o.foto) fotos += '<figure class="foto-ficha"><img src="' + o.foto + '" alt="Foto do objeto"><figcaption>Foto do objeto</figcaption></figure>';
+    if (e.foto_saida) fotos += '<figure class="foto-ficha"><img src="' + e.foto_saida + '" alt="Foto na saída"><figcaption>Na saída</figcaption></figure>';
+    var dv = devolucaoDe(e);
+    if (dv && dv.foto) fotos += '<figure class="foto-ficha"><img src="' + dv.foto + '" alt="Foto na volta"><figcaption>Na volta</figcaption></figure>';
+    var avisos = emAberto(e) ? (e.avisos_silenciados ? 'Silenciados' : 'Ativos') : 'Encerrados';
+    det = '<div class="detalhes" id="detalhes"><dl>' + linhasDoEmprestimo(e).map(function (x) { return linhaDef(x[0], x[0] === 'Contestação' ? x[1] : esc(x[1])); }).join('') +
+      linhaDef('Categoria do objeto', esc(o ? o.categoria : '')) + linhaDef('Avisos', avisos) + '</dl>' + fotos +
+      '<div class="ac" style="margin-top:12px"><button type="button" class="lk" data-acao="abrir-obj" data-id="' + e.objeto_id + '" data-de="' + e.id + '">Ver histórico do objeto</button>' +
+      '<button type="button" class="lk" data-acao="abrir-ami" data-id="' + e.amigo_id + '" data-de="' + e.id + '">Ver histórico do amigo</button></div></div>';
+  }
+  return '<div class="painel-int ficha">' + htmlTopoFicha() +
+    '<h3 class="nome" id="painel-titulo" tabindex="-1">' + esc(o ? o.nome : '') + '</h3><p class="quem">com ' + esc(a ? a.nome : '') + '</p>' +
+    '<p class="sit">' + esc(s.frase) + '</p><p class="sub">' + apoio + '</p>' + linhaDoTempo(e) + faixa +
+    ((principal || segunda) ? '<div class="ac">' + principal + segunda + '</div>' : '') +
+    (motivo ? '<p class="rn">' + motivo + '</p>' : '') +
+    (mais.length ? '<div class="mais"><button type="button" class="lk" data-acao="mais" aria-expanded="' + ui.mais + '">Mais ações</button>' +
+      (ui.mais ? mais.map(function (m) { return '<button type="button" class="lk" data-acao="' + m[0] + '">' + m[1] + '</button>'; }).join('') : '') + '</div>' : '') +
+    '<button type="button" class="lk" data-acao="detalhes" aria-expanded="' + ui.detalhes + '" style="margin-top:12px">Ver detalhes' + icone('i-arrow') + '</button>' + det + '</div>';
+}
+
+function htmlFichaObjeto(o) {
+  var sit = situacaoObjeto(o), aberto = emprestimoAbertoDoObjeto(o.id);
+  var hist = emprestimosDoObjeto(o.id).sort(function (a, b) { return b.criado_em - a.criado_em; });
+  var mais = [];
+  mais.push(o.arquivado ? ['desarquivar-obj', 'Desarquivar'] : ['arquivar-obj', 'Arquivar']);   // RN58–RN60
+  if (!hist.length) mais.push(['excluir-obj', 'Excluir']);                                          // RN57, RN58
+  var frase = sit + (aberto ? ' com ' + nomeAmigo(aberto) : '');
+  return '<div class="painel-int ficha">' + htmlTopoFicha() + '<h3 class="nome" id="painel-titulo" tabindex="-1">' + esc(o.nome) + '</h3>' +
+    '<p class="sit">' + esc(frase) + (o.arquivado ? ' · Arquivado' : '') + '</p>' +
+    '<p class="sub">' + esc(o.categoria) + ' · Estado de conservação: ' + o.estado_atual + '</p>' +
+    (o.foto ? '<figure class="foto-ficha"><img src="' + o.foto + '" alt="Foto do objeto"><figcaption>Foto do objeto</figcaption></figure>' : '') +
+    '<div class="ac">' + botaoAcao('editar-obj', 'Editar') + '</div>' +
+    '<div class="mais"><button type="button" class="lk" data-acao="mais" aria-expanded="' + ui.mais + '">Mais ações</button>' +
+    (ui.mais ? mais.map(function (m) { return '<button type="button" class="lk" data-acao="' + m[0] + '">' + m[1] + '</button>'; }).join('') : '') + '</div>' +
+    '<p class="gl hist-titulo">Histórico</p>' + htmlHistorico(hist, 'objeto') + '</div>';
+}
+function formatarTelefone(t) {
+  if (t.length === 11) return '(' + t.slice(0, 2) + ') ' + t.slice(2, 7) + '-' + t.slice(7);
+  if (t.length === 10) return '(' + t.slice(0, 2) + ') ' + t.slice(2, 6) + '-' + t.slice(6);
+  return t;
+}
+function resumoDoAmigo(lista) {   // RN70
+  var t = lista.length;
+  var atras = lista.filter(function (e) { return e.data_atrasado || e.estado === 'Atrasado'; }).length;   // LACUNA L08
+  var dano = lista.filter(temDano).length;
+  var perd = lista.filter(function (e) { return e.estado === 'Perdido'; }).length;
+  return t + ' ' + plural(t, 'empréstimo', 'empréstimos') + ' · ' + atras + ' ' + plural(atras, 'atrasado', 'atrasados') + ' · ' + dano + ' com dano · ' + perd + ' ' + plural(perd, 'perdido', 'perdidos');
+}
+function htmlFichaAmigo(a) {
+  var hist = emprestimosDoAmigo(a.id).sort(function (x, y) { return y.criado_em - x.criado_em; });
+  var abertos = hist.filter(emAberto).length;
+  var frase = a.anonimizado ? 'Dados removidos' : (a.bloqueado ? 'Bloqueado' : (abertos ? abertos + ' ' + plural(abertos, 'empréstimo em aberto', 'empréstimos em aberto') : 'Nenhum empréstimo em aberto'));   // LACUNA L16
+  if (a.arquivado && !a.anonimizado) frase += ' · Arquivado';
+  var sub = [];
+  if (a.telefone) sub.push(formatarTelefone(a.telefone));
+  if (a.observacao) sub.push(esc(a.observacao));
+  if (a.bloqueado && a.motivo_bloqueio) sub.push('Motivo do bloqueio: ' + esc(a.motivo_bloqueio));
+  var acoes = '', mais = [];
+  if (!a.anonimizado) {   // RN66: anonimizado só leitura
+    acoes = '<div class="ac">' + botaoAcao('editar-ami', 'Editar') + (a.bloqueado ? botaoAcao('desbloquear', 'Desbloquear', 'o') : botaoAcao('bloquear', 'Bloquear', 'o')) + '</div>';
+    if (a.bloqueado) mais.push(['editar-motivo', 'Editar motivo do bloqueio']);   // RN53 / LACUNA L09
+    mais.push(a.arquivado ? ['desarquivar-ami', 'Desarquivar'] : ['arquivar-ami', 'Arquivar']);
+    mais.push(['remover-dados', 'Remover dados pessoais']);                       // RN63
+    if (!hist.length) mais.push(['excluir-ami', 'Excluir']);                      // RN57, RN58
+  }
+  return '<div class="painel-int ficha">' + htmlTopoFicha() + '<h3 class="nome" id="painel-titulo" tabindex="-1">' + esc(a.nome) + '</h3>' +
+    '<p class="sit">' + esc(frase) + '</p>' + (sub.length ? '<p class="sub">' + sub.join(' · ') + '</p>' : '') +
+    '<p class="res-amigo">' + resumoDoAmigo(hist) + '</p>' + acoes +
+    (mais.length ? '<div class="mais"><button type="button" class="lk" data-acao="mais" aria-expanded="' + ui.mais + '">Mais ações</button>' +
+      (ui.mais ? mais.map(function (m) { return '<button type="button" class="lk" data-acao="' + m[0] + '">' + m[1] + '</button>'; }).join('') : '') + '</div>' : '') +
+    '<p class="gl hist-titulo">Histórico</p>' + htmlHistorico(hist, 'amigo') + '</div>';
+}
+function htmlFicha() {
+  var s = ui.sel;
+  if (s.tipo === 'emprestimo') { var e = buscar(estado.emprestimos, s.id); if (e) return htmlFichaEmprestimo(e); }
+  if (s.tipo === 'objeto') { var o = buscar(estado.objetos, s.id); if (o) return htmlFichaObjeto(o); }
+  if (s.tipo === 'amigo') { var a = buscar(estado.amigos, s.id); if (a) return htmlFichaAmigo(a); }
+  ui.sel = null; return '';
+}
+
+/* ====================================================================
+   FORMULÁRIOS (RD17–RD21, RD44)
+   ==================================================================== */
+function ctxEmprestimo(e) { return esc(nomeObjeto(e)) + ' · com ' + esc(nomeAmigo(e)); }   // RD18
+function opcoesDeEstado(semInutilizado) { return semInutilizado ? ESTADOS.slice(0, 4) : ESTADOS; }
+
+function formObjeto() {
+  var f = ui.form, d = f.dados, o = f.ctx.objetoId ? buscar(estado.objetos, f.ctx.objetoId) : null;
+  var emprestado = o && emprestimoAbertoDoObjeto(o.id);
+  var cats = '<option value="">Escolha a categoria</option>' + CATEGORIAS.map(function (c) { return '<option value="' + esc(c.nome) + '"' + (d.categoria === c.nome ? ' selected' : '') + '>' + esc(c.nome) + '</option>'; }).join('');
+  return {
+    titulo: o ? 'Editar objeto' : 'Novo objeto', contexto: o ? esc(o.nome) : '', principal: 'Salvar',
+    corpo: campoTexto('nome', 'Nome do objeto', 'text') +
+      '<div class="campo"><label for="f-categoria">Categoria</label><select id="f-categoria" data-campo="categoria"' + atributosErro('categoria') + '>' + cats + '</select>' + htmlErro('categoria') + '</div>' +   // RN04
+      grupoOpcoes('estado', 'Estado de conservação', ESTADOS, !!emprestado) +
+      (emprestado ? '<p class="ajuda" style="margin-top:-12px;margin-bottom:20px">O estado não pode ser editado enquanto o objeto está emprestado.</p>' : '') +   // RN04 / LACUNA L07
+      campoFoto('foto', 'Foto (opcional)')
+  };
+}
+function formAmigo() {
+  var f = ui.form, a = f.ctx.amigoId ? buscar(estado.amigos, f.ctx.amigoId) : null;
+  return {
+    titulo: a ? 'Editar amigo' : 'Novo amigo', contexto: a ? esc(a.nome) : '', principal: 'Salvar',
+    corpo: campoTexto('nome', 'Nome', 'text') + campoTexto('telefone', 'Telefone (opcional)', 'tel') +
+      campoTexto('observacao', 'Observação (opcional)', 'textarea', 'Não escreva dados sensíveis (saúde, religião, documentos).')   // RN61
+  };
+}
+function formEmprestimo() {
+  var f = ui.form, d = f.dados, h = hoje();
+  if (f.passo === 1) {   // passo 1: objeto (RN09)
+    var objs = estado.objetos.filter(function (o) { return !o.arquivado && situacaoObjeto(o) === 'Disponível' && o.estado_atual !== 'Inutilizado'; })
+      .sort(function (a, b) { return porNome(a.nome, b.nome); });
+    return { titulo: 'Novo empréstimo', contexto: 'Passo 1 de 3 · Escolha o objeto', semPrincipal: true,   // LACUNA L17
+      corpo: objs.length ? '<div class="linhas escolha">' + objs.map(function (o) { return '<button type="button" class="linha" data-acao="emp-objeto" data-id="' + o.id + '"><span class="nm">' + esc(o.nome) + '</span><span class="st">' + esc(o.categoria) + '</span></button>'; }).join('') + '</div>' + htmlErro('objeto')
+        : '<p class="vazio">Nenhum objeto disponível</p>' };   // LACUNA L10
+  }
+  if (f.passo === 2) {   // passo 2: amigo (RN14)
+    var ams = estado.amigos.filter(function (a) { return !a.bloqueado && !a.arquivado && !a.anonimizado; }).sort(function (a, b) { return porNome(a.nome, b.nome); });
+    return { titulo: 'Novo empréstimo', contexto: 'Passo 2 de 3 · ' + esc(buscar(estado.objetos, d.objetoId).nome) + ' · Escolha o amigo', semPrincipal: true, voltar: true,
+      corpo: ams.length ? '<div class="linhas escolha">' + ams.map(function (a) { return '<button type="button" class="linha" data-acao="emp-amigo" data-id="' + a.id + '"><span class="nm">' + esc(a.nome) + '</span><span class="st"></span></button>'; }).join('') + '</div>'
+        : '<p class="vazio">Nenhum amigo disponível</p>' };   // LACUNA L10
+  }
+  var o = buscar(estado.objetos, d.objetoId), a = buscar(estado.amigos, d.amigoId);
+  var previa = '';
+  var prevista = previstaDoFormulario();
+  if (d.modo !== 'Sem prazo' && prevista) previa = '<p class="preview" id="previa">Data prevista: ' + formatarData(prevista) + '</p>';   // LACUNA L17
+  else previa = '<p class="preview" id="previa"></p>';
+  var campoPrazo = '';
+  if (d.modo === 'Em dias') campoPrazo = campoNumero('dias', 'Prazo em dias (1 a 90)') + previa;
+  if (d.modo === 'Escolher data') campoPrazo = campoData('dataPrevista', 'Data prevista', somarDias(d.saida && dataValida(d.saida) ? d.saida : h, 1), somarDias(d.saida && dataValida(d.saida) ? d.saida : h, 90)) + previa;
+  return { titulo: 'Novo empréstimo', contexto: 'Passo 3 de 3 · ' + esc(o.nome) + ' · com ' + esc(a.nome), principal: 'Registrar empréstimo', voltar: true,
+    corpo: campoData('saida', 'Data de saída', somarDias(h, -30), h) +                    // RN15
+      grupoOpcoes('modo', 'Prazo de devolução', ['Em dias', 'Escolher data', 'Sem prazo'], false) +   // RN16
+      campoPrazo +
+      grupoOpcoes('estadoSaida', 'Estado na saída', opcoesDeEstado(true), false) +        // RN38
+      campoFoto('fotoSaida', 'Foto de saída (opcional)') };
+}
+function formRenovar() {
+  var e = buscar(estado.emprestimos, ui.form.ctx.emprestimoId), dias = inteiroEntre(ui.form.dados.dias, 1, 30);
+  return { titulo: 'Renovar', contexto: ctxEmprestimo(e), principal: 'Renovar',
+    corpo: campoNumero('dias', 'Renovar por quantos dias (1 a 30)') +
+      '<p class="preview" id="previa">' + (dias ? 'Nova data prevista: ' + formatarData(somarDias(e.data_prevista, dias)) : '') + '</p>' };   // LACUNA L17
+}
+function formPrazo() {
+  var e = buscar(estado.emprestimos, ui.form.ctx.emprestimoId), dias = inteiroEntre(ui.form.dados.dias, 1, 90);
+  return { titulo: 'Definir prazo', contexto: ctxEmprestimo(e), principal: 'Definir prazo',
+    corpo: campoNumero('dias', 'Prazo em dias a partir de hoje (1 a 90)') +
+      '<p class="preview" id="previa">' + (dias ? 'Data prevista: ' + formatarData(somarDias(hoje(), dias)) : '') + '</p>' };
+}
+function formDevolucao() {
+  var f = ui.form, d = f.dados, e = buscar(estado.emprestimos, f.ctx.emprestimoId);
+  var dano = d.estado && rank(d.estado) > rank(e.estado_saida);
+  return { titulo: 'Registrar devolução', contexto: ctxEmprestimo(e), principal: 'Registrar devolução',
+    corpo: grupoOpcoes('estado', 'Estado na volta (saiu: ' + e.estado_saida + ')', ESTADOS, false) +   // RN40
+      (dano ? grupoOpcoes('desfecho', 'Desfecho do dano', DESFECHOS.slice(0, 3), false) : '') +     // RN45
+      campoFoto('foto', 'Foto na volta (opcional)') };
+}
+function formDesfecho() {
+  var e = buscar(estado.emprestimos, ui.form.ctx.emprestimoId);
+  return { titulo: 'Trocar desfecho', contexto: ctxEmprestimo(e), principal: 'Salvar', corpo: grupoOpcoes('desfecho', 'Desfecho do dano', DESFECHOS, false) };   // RN45
+}
+function formContestacao() {
+  var e = buscar(estado.emprestimos, ui.form.ctx.emprestimoId);
+  return { titulo: e.contestacao ? 'Editar contestação' : 'Registrar contestação', contexto: ctxEmprestimo(e), principal: 'Salvar',
+    corpo: campoTexto('texto', 'Contestação do amigo (até 500 caracteres)', 'textarea') };   // RN46
+}
+function formBloqueio() {
+  var a = buscar(estado.amigos, ui.form.ctx.amigoId), editando = ui.form.tipo === 'motivo';
+  return { titulo: editando ? 'Editar motivo do bloqueio' : 'Bloquear amigo', contexto: esc(a.nome), principal: editando ? 'Salvar' : 'Bloquear',
+    corpo: campoTexto('motivo', 'Motivo (opcional, até 200 caracteres)', 'textarea') };   // RN53
+}
+var FORMULARIOS = { objeto: formObjeto, amigo: formAmigo, emprestimo: formEmprestimo, renovar: formRenovar, prazo: formPrazo, devolucao: formDevolucao, desfecho: formDesfecho, contestacao: formContestacao, bloqueio: formBloqueio, motivo: formBloqueio };
+
+function htmlForm() {
+  var f = ui.form, def = FORMULARIOS[f.tipo]();
+  var voltar = def.voltar ? '<button type="button" class="lk" data-acao="emp-voltar">' + icone('i-back') + 'Voltar</button>' : '';
+  return '<div class="painel-int form"><div class="alca" aria-hidden="true"></div>' +
+    '<div class="passo">' + voltar + '</div>' +
+    '<h2 id="painel-titulo" tabindex="-1">' + def.titulo + '</h2><p class="ctx">' + def.contexto + '</p><div class="corpo">' + def.corpo + '</div>' +
+    '<div class="rodape">' + (def.semPrincipal ? '' : '<button type="button" class="btn" data-acao="salvar">' + def.principal + '</button>') +
+    '<button type="button" class="lk" data-acao="cancelar">Cancelar</button></div></div>';
+}
+
+function abrirForm(tipo, dados, ctx) {
+  comGuarda(function () {
+    ui.form = { tipo: tipo, dados: dados, erros: {}, sujo: false, passo: 1, ctx: ctx || {} };
+    renderPainel();
+  });
+}
+// RD21: se houver dado digitado, pede confirmação antes de descartar
+function comGuarda(depois) {
+  if (ui.form && ui.form.sujo) {
+    dialogo('Descartar o que foi preenchido?', [   // LACUNA L12
+      { rotulo: 'Descartar', cheio: true, acao: function () { ui.form = null; depois(); } },
+      { rotulo: 'Continuar preenchendo', cheio: false }
+    ]);
+  } else { ui.form = null; depois(); }
+}
+function fecharForm() {   // RD44: ao salvar ou cancelar, a ficha volta
+  ui.form = null;
+  renderPainel();
+}
+function tentarFecharForm() { if (ui.form && ui.form.sujo) comGuarda(function () { renderPainel(); }); else fecharForm(); }
+
+function previstaDoFormulario() {   // RN16: calcula a data prevista do formulário de novo empréstimo
+  var d = ui.form.dados;
+  if (d.modo === 'Sem prazo') return null;
+  var saida = dataValida(d.saida) ? d.saida : hoje();
+  if (d.modo === 'Em dias') { var n = inteiroEntre(d.dias, 1, 90); return n ? somarDias(saida, n) : null; }
+  return dataValida(d.dataPrevista) ? d.dataPrevista : null;
+}
+
+/* ====================================================================
+   RENDER
+   ==================================================================== */
+function renderData() { $('dl-data').textContent = formatarData(hoje()); }
+function renderNav() {
+  document.querySelectorAll('#nav button').forEach(function (b) {
+    var on = b.dataset.tela === ui.tela;
+    b.classList.toggle('on', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current');
+  });
+  var n = avisosNaoLidos();
+  $('ct-avisos').textContent = n ? n : '';   // RD26
+  $('ct-avisos').setAttribute('aria-label', n ? n + ' ' + plural(n, 'aviso não lido', 'avisos não lidos') : '');
+  var botao = $('novo');
+  var rotulos = { emprestimos: 'Novo empréstimo', objetos: 'Novo objeto', amigos: 'Novo amigo' };
+  botao.hidden = ui.tela === 'avisos';
+  if (!botao.hidden) botao.innerHTML = icone('i-plus') + rotulos[ui.tela];
+}
+function renderLista(entrada) {
+  var el = $('lista'), topo = el.scrollTop, html;
+  if (ui.tela === 'emprestimos') html = htmlListaEmprestimos(entrada);
+  else if (ui.tela === 'objetos') html = htmlListaObjetos();
+  else if (ui.tela === 'amigos') html = htmlListaAmigos();
+  else html = htmlTelaAvisos();
+  el.innerHTML = html; el.scrollTop = topo;
+  ajustarPicotes();
+}
+function mostrarPainel() {
+  var p = $('painel');
+  clearTimeout(timerPainel);
+  if (!ui.painelAberto) { ui.focoOrigem = document.activeElement; }
+  ui.painelAberto = true;
+  p.classList.remove('fechando'); p.classList.add('aberto');
+  $('scrim').classList.add('on');
+}
+function esconderPainel() {
+  var p = $('painel');
+  if (!ui.painelAberto) return;
+  ui.painelAberto = false;
+  $('scrim').classList.remove('on');
+  if (ehCelular() && !reduzido()) { p.classList.add('fechando'); timerPainel = setTimeout(function () { p.classList.remove('aberto', 'fechando'); $('painel-conteudo').innerHTML = ''; }, 200); }   // RD34: fecha em 200 ms
+  else { p.classList.remove('aberto'); }
+  if (ui.focoOrigem && document.body.contains(ui.focoOrigem) && ui.focoOrigem.focus) ui.focoOrigem.focus();
+}
+function textoVazioDaFicha() {
+  var t = { emprestimos: 'Escolha um empréstimo para ver os detalhes.', objetos: 'Escolha um objeto para ver os detalhes.', amigos: 'Escolha um amigo para ver os detalhes.', avisos: '' };   // RD40 / LACUNA L15
+  return '<p class="vazio-ficha">' + t[ui.tela] + '</p>';
+}
+function renderPainel() {
+  var p = $('painel'), c = $('painel-conteudo');
+  if (!ui.form && !ui.sel) {
+    esconderPainel();
+    if (!ehCelular()) { c.innerHTML = textoVazioDaFicha(); }
+    ui.chaveAnterior = '';
+    return;
+  }
+  var chave = ui.form ? 'form:' + ui.form.tipo + ':' + ui.form.passo : 'ficha:' + ui.sel.tipo + ':' + ui.sel.id;
+  var antes = p.scrollTop, trocou = chave !== ui.chaveAnterior;
+  var ativo = document.activeElement, memoria = null;
+  if (ativo && ativo.dataset && p.contains(ativo)) memoria = { campo: ativo.dataset.campo, valor: ativo.dataset.valor, acao: ativo.dataset.acao, id: ativo.id };
+  var html = ui.form ? htmlForm() : htmlFicha();
+  if (!html) { renderPainel(); return; }
+  var jaAberto = ui.painelAberto;
+  c.innerHTML = html;
+  mostrarPainel();
+  if (trocou) {
+    var mudouModo = ui.chaveAnterior.split(':')[0] !== chave.split(':')[0];
+    if (jaAberto && (mudouModo || ehCelular())) { c.classList.remove('troca'); void c.offsetWidth; c.classList.add('troca'); }   // RD44: esmaecimento cruzado de 200 ms
+    else if (!ehCelular()) { p.classList.remove('entrando'); void p.offsetWidth; p.classList.add('entrando'); }                   // RD34: a ficha desliza (300 ms)
+  }
+  ui.chaveAnterior = chave;
+  p.scrollTop = trocou ? 0 : antes;
+  // devolve o foco ao controle que o usuário estava usando (os grupos são redesenhados)
+  var alvo = null;
+  if (memoria && !trocou) {
+    if (memoria.id) alvo = document.getElementById(memoria.id);
+    if (!alvo && memoria.campo && memoria.valor !== undefined) alvo = c.querySelector('[data-campo="' + memoria.campo + '"][data-valor="' + memoria.valor + '"]');
+  }
+  var erro = c.querySelector('[aria-invalid="true"]');
+  if (erro && ui.form && ui.form.focarErro) { erro.focus(); ui.form.focarErro = false; }   // RD20: foco no primeiro erro
+  else if (alvo) alvo.focus();
+  else if (trocou) { var t = $('painel-titulo'); if (t) t.focus({ preventScroll: true }); }
+  ajustarPicotes();
+}
+function renderTudo(entrada) {
+  atualizarEstados();
+  renderData(); renderNav(); renderLista(entrada); renderPainel();
+}
+
+/* ====================================================================
+   NAVEGAÇÃO E ABERTURA DE FICHAS
+   ==================================================================== */
+function irPara(tela) {
+  comGuarda(function () {
+    ui.tela = tela; ui.filtro = 'padrao'; ui.sel = null; ui.voltar = null; ui.mais = false; ui.detalhes = false;
+    if (tela === 'avisos') { avisosEntregues().forEach(function (a) { a.lido = true; }); salvar(); }   // RD26
+    renderNav(); renderLista(true); renderPainel();
+  });
+}
+function abrirFicha(tipo, id, voltarPara) {
+  comGuarda(function () {
+    ui.sel = { tipo: tipo, id: id }; ui.voltar = voltarPara || null; ui.mais = false; ui.detalhes = false;
+    renderLista(false); renderPainel();
+  });
+}
+function fecharFicha() { ui.sel = null; ui.voltar = null; ui.form = null; renderLista(false); renderPainel(); }
+function pedirFechamento() {   // Esc, área escurecida, arrasto
+  if (ui.form) tentarFecharForm(); else fecharFicha();
+}
+
+/* ====================================================================
+   AÇÕES DE CADASTRO
+   ==================================================================== */
+// ----- HU01 / RN04: objeto -----
+function novoObjeto() { abrirForm('objeto', { nome: '', categoria: '', estado: '', foto: null }); }
+function editarObjeto(id) {
+  var o = buscar(estado.objetos, id);
+  abrirForm('objeto', { nome: o.nome, categoria: o.categoria, estado: o.estado_atual, foto: o.foto }, { objetoId: id });
+}
+function salvarObjeto() {
+  var f = ui.form, d = f.dados, erros = {}, nome = limpar(d.nome);   // RN03
+  var o = f.ctx.objetoId ? buscar(estado.objetos, f.ctx.objetoId) : null;
+  if (!nome) erros.nome = 'Informe o nome do objeto';                                               // HU01
+  else if (nome.length > 60) erros.nome = 'O nome pode ter no máximo 60 caracteres';                // HU01
+  if (!d.categoria) erros.categoria = 'Informe a categoria';                                         // RN74
+  if (!d.estado) erros.estado = 'Informe o estado de conservação';                                   // RN74 / LACUNA L04
+  if (temErros(erros)) return;
+  if (o) {
+    o.nome = nome; o.categoria = d.categoria; o.foto = d.foto || null;                               // RN04: mudar categoria não altera empréstimos
+    if (!emprestimoAbertoDoObjeto(o.id)) o.estado_atual = d.estado;                                  // RN04: estado só sem empréstimo em aberto
+  } else {
+    o = { id: novoId('o'), nome: nome, categoria: d.categoria, estado_atual: d.estado, foto: d.foto || null, arquivado: false, criado_em: estado.seq };   // RN11: nome repetido é permitido
+    estado.objetos.push(o);
+  }
+  var extra = gravar([{ obj: o, campo: 'foto' }]);
+  ui.form = null; ui.sel = f.ctx.objetoId ? ui.sel : null;
+  renderTudo(false); aviso('Feito: ' + (f.ctx.objetoId ? 'objeto atualizado' : 'objeto cadastrado') + '.' + extra);
+}
+function temErros(erros) {
+  var f = ui.form;
+  f.erros = erros;
+  var tem = Object.keys(erros).length > 0;
+  if (tem) { f.focarErro = true; renderPainel(); }               // RD20: nada é salvo
+  return tem;
+}
+
+// ----- HU02 / RN12, RN13: amigo -----
+function novoAmigo() { abrirForm('amigo', { nome: '', telefone: '', observacao: '' }); }
+function editarAmigo(id) {
+  var a = buscar(estado.amigos, id);
+  abrirForm('amigo', { nome: a.nome, telefone: a.telefone, observacao: a.observacao }, { amigoId: id });
+}
+function salvarAmigo() {
+  var f = ui.form, d = f.dados, erros = {}, nome = limpar(d.nome), obs = limpar(d.observacao);
+  var tel = limpar(d.telefone).replace(/[\s()\-]/g, '');   // RN12: tira espaços, parênteses e hífens
+  if (!nome) erros.nome = 'Informe o nome do amigo';                                                // RN74
+  else if (nome.length > 60) erros.nome = 'O nome pode ter no máximo 60 caracteres';                // RN74
+  if (tel && !/^\d{10,11}$/.test(tel)) erros.telefone = 'Telefone deve ter 10 ou 11 dígitos com DDD';   // HU02 / LACUNA L04
+  if (obs.length > 200) erros.observacao = 'A observação pode ter no máximo 200 caracteres';        // HU02
+  if (temErros(erros)) return;
+  var proprio = f.ctx.amigoId;
+  var repetido = estado.amigos.some(function (a) { return a.id !== proprio && !a.anonimizado && semAcento(a.nome) === semAcento(nome); });   // RN13, RN66
+  function gravarAmigo() {
+    var a = proprio ? buscar(estado.amigos, proprio) : null;
+    if (a) { a.nome = nome; a.telefone = tel; a.observacao = obs; }
+    else estado.amigos.push({ id: novoId('a'), nome: nome, telefone: tel, observacao: obs, bloqueado: false, motivo_bloqueio: '', arquivado: false, anonimizado: false, criado_em: estado.seq });
+    salvar(); ui.form = null; if (!proprio) ui.sel = null;
+    renderTudo(false); aviso('Feito: ' + (proprio ? 'amigo atualizado' : 'amigo cadastrado') + '.');
+  }
+  if (repetido) {
+    dialogo('Já existe um amigo chamado ' + nome + '. Salvar mesmo assim?', [   // RN13
+      { rotulo: 'Salvar', cheio: true, acao: gravarAmigo }, { rotulo: 'Cancelar', cheio: false }]);
+  } else gravarAmigo();
+}
+
+// ----- HU03: novo empréstimo -----
+function novoEmprestimo() {
+  abrirForm('emprestimo', { objetoId: '', amigoId: '', saida: hoje(), modo: 'Em dias', dias: '', dataPrevista: '', estadoSaida: '', fotoSaida: null });   // RN15: saída começa em hoje
+  ui.form.passo = 1;
+}
+function escolherObjetoDoEmprestimo(id) {
+  var f = ui.form, o = buscar(estado.objetos, id);
+  f.dados.objetoId = id;
+  f.dados.dias = String(categoriaDe(o.categoria).prazo);   // RN17: prazo padrão da categoria
+  f.dados.estadoSaida = o.estado_atual;                     // RN38: vem com o estado atual
+  f.passo = 2; renderPainel();
+}
+function escolherAmigoDoEmprestimo(id) {
+  var a = buscar(estado.amigos, id), texto = textoDoAlerta(a);   // RN24
+  function seguir() { ui.form.dados.amigoId = id; ui.form.passo = 3; renderPainel(); }
+  if (texto) dialogo(texto, [{ rotulo: 'Emprestar', cheio: true, acao: seguir }, { rotulo: 'Cancelar', cheio: false }]);   // HU03: Cancelar volta à seleção de amigo
+  else seguir();
+}
+function salvarEmprestimo() {
+  var f = ui.form, d = f.dados, erros = {}, h = hoje();
+  var o = buscar(estado.objetos, d.objetoId), a = buscar(estado.amigos, d.amigoId);
+  var saidaOk = dataValida(d.saida) && diferencaDias(d.saida, h) <= 0 && diferencaDias(d.saida, h) >= -30;   // RN15
+  if (!saidaOk) erros.saida = 'A data de saída deve ser de hoje até 30 dias antes';                          // LACUNA L04
+  var saida = saidaOk ? d.saida : h, prevista = null;
+  if (d.modo === 'Em dias') {                                                                                    // RN16 (a)
+    var n = inteiroEntre(d.dias, 1, 90);
+    if (n === null) erros.dias = 'O prazo deve ser de 1 a 90 dias';                                          // HU03
+    else prevista = somarDias(saida, n);
+  } else if (d.modo === 'Escolher data') {                                                                            // RN16 (b)
+    if (!dataValida(d.dataPrevista)) erros.dataPrevista = 'Informe a data prevista';                         // LACUNA L04
+    else if (diferencaDias(d.dataPrevista, saida) < 1 || diferencaDias(d.dataPrevista, saida) > 90) erros.dataPrevista = 'O prazo deve ser de 1 a 90 dias';   // LACUNA L04
+    else prevista = d.dataPrevista;
+  }
+  if (prevista && diferencaDias(prevista, h) < 0) erros[d.modo === 'Em dias' ? 'dias' : 'dataPrevista'] = 'A data de devolução já passou. Escolha um prazo maior.';   // RN18
+  if (!d.estadoSaida) erros.estadoSaida = 'Informe o estado de conservação';                                 // RN74 / LACUNA L04
+  if (temErros(erros)) return;
+  var e = inserirEmprestimo(o, a, saida, prevista, d.estadoSaida, d.fotoSaida);   // RN10: o objeto sai da seleção; RN38: estado atual muda
+  e.criado_dia = h;
+  var extra = gravar([{ obj: e, campo: 'foto_saida' }]);
+  ui.form = null; ui.tela = 'emprestimos'; ui.filtro = 'padrao';
+  ui.sel = { tipo: 'emprestimo', id: e.id }; ui.voltar = null; ui.mais = false; ui.detalhes = false;
+  renderTudo(false); aviso('Feito: empréstimo registrado.' + extra);   // RD44: abre a ficha do empréstimo criado
+}
+
+// ----- HU04: renovar e definir prazo -----
+function abrirRenovar(id) { abrirForm('renovar', { dias: '' }, { emprestimoId: id }); }
+function salvarRenovacao() {
+  var f = ui.form, e = buscar(estado.emprestimos, f.ctx.emprestimoId), erros = {};
+  var dias = inteiroEntre(f.dados.dias, 1, 30);                                                // RN35
+  if (e.estado !== 'Ativo' || !e.data_prevista || e.renovacoes >= 1) { fecharForm(); return; }   // RN33, RN34 (proteção)
+  if (dias === null) erros.dias = 'A renovação deve ser de 1 a 30 dias';                      // HU04
+  else {
+    var nova = somarDias(e.data_prevista, dias);
+    if (diferencaDias(nova, hoje()) < 0) erros.dias = 'A nova data (' + formatarData(nova) + ') já passou. Renove por pelo menos ' + diferencaDias(hoje(), e.data_prevista) + ' dias.';   // RN36
+  }
+  if (temErros(erros)) return;
+  var anterior = e.data_prevista;
+  e.data_prevista = somarDias(anterior, dias); e.renovacoes = 1;
+  estado.renovacoes.push({ id: novoId('r'), emprestimo_id: e.id, data: hoje(), dias: dias, data_prevista_anterior: anterior, data_prevista_nova: e.data_prevista });
+  salvar(); ui.form = null; ui.detalhes = true;
+  renderTudo(false); aviso('Feito: prazo renovado.');
+}
+function abrirDefinirPrazo(id) { abrirForm('prazo', { dias: '' }, { emprestimoId: id }); }
+function salvarPrazo() {
+  var f = ui.form, e = buscar(estado.emprestimos, f.ctx.emprestimoId), erros = {};
+  var dias = inteiroEntre(f.dados.dias, 1, 90);
+  if (dias === null) erros.dias = 'O prazo deve ser de 1 a 90 dias';                          // LACUNA L05
+  if (temErros(erros)) return;
+  e.data_prevista = somarDias(hoje(), dias); e.prazo_definido_depois = true;                   // RN20: a partir de hoje, sem contar como renovação
+  salvar(); ui.form = null; ui.detalhes = true;
+  renderTudo(false); aviso('Feito: prazo definido.');
+}
+
+// ----- HU05, HU06, HU07: devolução, desfecho, contestação, perda -----
+function abrirDevolucao(id) { abrirForm('devolucao', { estado: '', desfecho: '', foto: null }, { emprestimoId: id }); }
+function salvarDevolucao() {
+  var f = ui.form, d = f.dados, e = buscar(estado.emprestimos, f.ctx.emprestimoId), erros = {};
+  if (!d.estado) erros.estado = 'Informe o estado de conservação';                             // RN40 / LACUNA L04
+  var dano = d.estado && rank(d.estado) > rank(e.estado_saida);                                // RN44
+  if (dano && !d.desfecho) erros.desfecho = 'Escolha o desfecho do dano';                      // HU05
+  if (temErros(erros)) return;
+  var o = buscar(estado.objetos, e.objeto_id);
+  var dev = aplicarDevolucao(e, d.estado, d.desfecho, d.foto, hoje());                         // RN39: sempre hoje
+  var extra = gravar([{ obj: dev, campo: 'foto' }]);
+  ui.form = null; ui.detalhes = true;
+  renderTudo(false); aviso('Feito: devolução registrada.' + extra);
+  if (d.estado === 'Inutilizado' && !o.arquivado) {                                            // RN47
+    dialogo(o.nome + ' voltou inutilizado. Arquivar?', [
+      { rotulo: 'Arquivar', cheio: true, acao: function () { o.arquivado = true; salvar(); renderTudo(false); aviso('Feito: objeto arquivado.'); } },
+      { rotulo: 'Agora não', cheio: false }]);
+  }
+}
+function abrirDesfecho(id) { var e = buscar(estado.emprestimos, id); abrirForm('desfecho', { desfecho: e.desfecho_dano }, { emprestimoId: id }); }
+function salvarDesfecho() {
+  var f = ui.form, e = buscar(estado.emprestimos, f.ctx.emprestimoId);
+  if (!f.dados.desfecho) { temErros({ desfecho: 'Escolha o desfecho do dano' }); return; }     // RN45: nunca vazio
+  e.desfecho_dano = f.dados.desfecho; salvar(); ui.form = null; ui.detalhes = true;
+  renderTudo(false); aviso('Feito: desfecho atualizado.');
+}
+function abrirContestacao(id) { var e = buscar(estado.emprestimos, id); abrirForm('contestacao', { texto: e.contestacao || '' }, { emprestimoId: id }); }
+function salvarContestacao() {
+  var f = ui.form, e = buscar(estado.emprestimos, f.ctx.emprestimoId), t = limpar(f.dados.texto), erros = {};
+  if (!t) erros.texto = 'Informe a contestação';                                                // LACUNA L04
+  else if (t.length > 500) erros.texto = 'A contestação pode ter no máximo 500 caracteres';     // HU06
+  if (temErros(erros)) return;
+  e.contestacao = t; salvar(); ui.form = null; ui.detalhes = true;                               // RN46: não altera estado, dano nem desfecho
+  renderTudo(false); aviso('Feito: contestação registrada.');
+}
+function marcarPerda(id) {
+  var e = buscar(estado.emprestimos, id), o = buscar(estado.objetos, e.objeto_id);
+  dialogo('Marcar ' + o.nome + ' como perdido? Isso encerra o empréstimo.', [   // RN48
+    { rotulo: 'Confirmar', cheio: true, acao: function () {
+      aplicarPerda(e, hoje()); salvar(); ui.detalhes = true; renderTudo(false); aviso('Feito: empréstimo marcado como perdido.');
+      if (!o.arquivado) dialogo('Arquivar ' + o.nome + '?', [   // RN52
+        { rotulo: 'Arquivar', cheio: true, acao: function () { o.arquivado = true; salvar(); renderTudo(false); aviso('Feito: objeto arquivado.'); } },
+        { rotulo: 'Agora não', cheio: false }]);
+    } }, { rotulo: 'Cancelar', cheio: false }]);
+}
+function alternarSilencio(id, silenciar) {   // RN30
+  var e = buscar(estado.emprestimos, id); e.avisos_silenciados = silenciar; salvar();
+  renderTudo(false); aviso(silenciar ? 'Feito: avisos silenciados.' : 'Feito: avisos reativados.');
+}
+function excluirEmprestimo(id) {   // RN75
+  var e = buscar(estado.emprestimos, id);
+  if (!podeExcluirEmprestimo(e)) return;
+  dialogo('Excluir o empréstimo de ' + nomeObjeto(e) + ' com ' + nomeAmigo(e) + '? Isso não pode ser desfeito.', [   // LACUNA L06
+    { rotulo: 'Confirmar', cheio: true, acao: function () {
+      var o = buscar(estado.objetos, e.objeto_id);
+      o.estado_atual = e.estado_objeto_antes;                                                    // RN75: o estado volta ao que era
+      estado.emprestimos = estado.emprestimos.filter(function (x) { return x.id !== e.id; });
+      estado.avisos = estado.avisos.filter(function (a) { return a.empId !== e.id; });           // RN30: avisos cancelados
+      salvar(); ui.sel = null; ui.form = null; renderTudo(false); aviso('Feito: empréstimo excluído.');
+    } }, { rotulo: 'Cancelar', cheio: false }]);
+}
+
+// ----- HU11: bloqueio -----
+function abrirBloqueio(id, editando) { var a = buscar(estado.amigos, id); abrirForm(editando ? 'motivo' : 'bloqueio', { motivo: editando ? a.motivo_bloqueio : '' }, { amigoId: id }); }
+function salvarBloqueio() {
+  var f = ui.form, a = buscar(estado.amigos, f.ctx.amigoId), m = limpar(f.dados.motivo);
+  if (m.length > 200) { temErros({ motivo: 'O motivo pode ter no máximo 200 caracteres' }); return; }   // LACUNA L04
+  var editando = f.tipo === 'motivo';
+  a.bloqueado = true; a.motivo_bloqueio = m; salvar(); ui.form = null;
+  renderTudo(false); aviso(editando ? 'Feito: motivo atualizado.' : 'Feito: amigo bloqueado.');
+}
+function desbloquear(id) {   // RN53: o motivo é apagado
+  var a = buscar(estado.amigos, id); if (a.anonimizado) return;
+  a.bloqueado = false; a.motivo_bloqueio = ''; salvar(); renderTudo(false); aviso('Feito: amigo desbloqueado.');
+}
+
+// ----- HU12: arquivar e excluir -----
+function arquivar(tipo, id, arquivar) {
+  var item = buscar(tipo === 'objeto' ? estado.objetos : estado.amigos, id);
+  if (arquivar) {
+    var abertos = (tipo === 'objeto' ? emprestimosDoObjeto(id) : emprestimosDoAmigo(id)).filter(emAberto).length;
+    if (abertos) { mensagemBloqueio('Encerre os empréstimos em aberto antes de arquivar.'); return; }   // RN59
+  } else if (item.anonimizado) return;                                                                    // RN60, RN66
+  item.arquivado = arquivar; salvar(); renderTudo(false); aviso('Feito: ' + (arquivar ? 'arquivado' : 'desarquivado') + '.');
+}
+function excluirCadastro(tipo, id) {
+  var lista = tipo === 'objeto' ? estado.objetos : estado.amigos, item = buscar(lista, id);
+  var tem = (tipo === 'objeto' ? emprestimosDoObjeto(id) : emprestimosDoAmigo(id)).length;
+  if (tem) return;                                                                                         // RN58: com histórico, só arquivar
+  dialogo('Excluir ' + item.nome + '? Isso não pode ser desfeito.', [                                       // RN57
+    { rotulo: 'Confirmar', cheio: true, acao: function () {
+      if (tipo === 'objeto') estado.objetos = estado.objetos.filter(function (x) { return x.id !== id; });
+      else estado.amigos = estado.amigos.filter(function (x) { return x.id !== id; });
+      salvar(); ui.sel = null; renderTudo(false); aviso('Feito: ' + item.nome + ' excluído.');
+    } }, { rotulo: 'Cancelar', cheio: false }]);
+}
+
+// ----- HU13: remover dados pessoais (LGPD) -----
+function removerDados(id) {
+  var a = buscar(estado.amigos, id); if (a.anonimizado) return;                                              // RN66
+  var lista = emprestimosDoAmigo(id);
+  if (lista.some(emAberto)) { mensagemBloqueio('Encerre os empréstimos de ' + a.nome + ' antes de remover os dados.'); return; }   // RN64
+  if (lista.some(function (e) { return temDano(e) && (e.desfecho_dano === 'Reparo combinado' || e.desfecho_dano === 'Reposição combinada'); })) {
+    mensagemBloqueio('Resolva o dano dos empréstimos de ' + a.nome + ' antes de remover os dados.'); return;   // RN64 / D27
+  }
+  dialogo('Os dados de ' + a.nome + ' serão apagados e não podem ser recuperados. Continuar?', [              // RN65
+    { rotulo: 'Confirmar', cheio: true, acao: function () {
+      if (!lista.length) {                                                                                    // RN64: sem empréstimos, exclui o cadastro (RN57)
+        estado.amigos = estado.amigos.filter(function (x) { return x.id !== id; });
+        salvar(); ui.sel = null; renderTudo(false); aviso('Feito: dados removidos.'); return;
+      }
+      estado.config.contador_anonimizacao += 1;                                                              // RN65: só avança na confirmação
+      a.nome = 'Contato removido #' + estado.config.contador_anonimizacao;
+      a.telefone = ''; a.observacao = ''; a.motivo_bloqueio = '';
+      lista.forEach(function (e) { e.contestacao = null; });                                                  // RN65: apaga as contestações
+      a.anonimizado = true; a.arquivado = true;
+      salvar(); renderTudo(false); aviso('Feito: dados removidos.');
+    } }, { rotulo: 'Cancelar', cheio: false }]);
+}
+
+/* ====================================================================
+   FOTOS (RN04, RN38, RN40, RD49 / LACUNA L14)
+   ==================================================================== */
+function lerFoto(arquivo, depois) {
+  var leitor = new FileReader();
+  leitor.onload = function () {
+    var img = new Image();
+    img.onload = function () {
+      try {                                                   // reduz para caber no localStorage
+        var esc2 = Math.min(1, 640 / Math.max(img.width, img.height));
+        var c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * esc2)); c.height = Math.max(1, Math.round(img.height * esc2));
+        var ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, c.width, c.height); ctx.drawImage(img, 0, 0, c.width, c.height);
+        depois(c.toDataURL('image/jpeg', 0.72));
+      } catch (e) { depois(leitor.result); }
+    };
+    img.onerror = function () { depois(leitor.result); };
+    img.src = leitor.result;
+  };
+  leitor.readAsDataURL(arquivo);
+}
+function escolherFoto(input) {
+  var f = ui.form, campo = input.dataset.foto, arquivo = input.files && input.files[0];
+  if (!arquivo) return;
+  var tipoOk = arquivo.type === 'image/jpeg' || arquivo.type === 'image/png';
+  if (!tipoOk || arquivo.size > 10 * 1024 * 1024) {           // RN04: a foto não é anexada
+    f.erros['foto_' + campo] = MSG_FOTO; renderPainel(); return;
+  }
+  delete f.erros['foto_' + campo];
+  lerFoto(arquivo, function (url) { f.dados[campo] = url; f.sujo = true; renderPainel(); });
+}
+
+/* ====================================================================
+   EVENTOS
+   ==================================================================== */
+function mudarData(delta) {   // RD27, RD46: só dias
+  var antes = posicoesDosPasses();
+  estado.dataSimulada = delta === 'hoje' ? dataDoComputador() : somarDias(hoje(), parseInt(delta, 10));
+  atualizarEstados(); entregarAvisos(); salvar();
+  renderData(); renderNav(); renderLista(false); renderPainel();
+  animarMudancas(antes);
+}
+function restaurarExemplo() {   // LACUNA L13
+  dialogo('Restaurar os dados de exemplo? Tudo o que foi cadastrado será apagado.', [
+    { rotulo: 'Confirmar', cheio: true, acao: function () {
+      try { localStorage.removeItem(CHAVE); } catch (e) { }
+      semear(); salvar(); ui.form = null; ui.sel = null; ui.tela = 'emprestimos'; ui.filtro = 'padrao';
+      renderTudo(true); aviso('Feito: dados de exemplo restaurados.');
+    } }, { rotulo: 'Cancelar', cheio: false }]);
+}
+function salvarForm() {
+  var t = ui.form.tipo;
+  if (t === 'objeto') salvarObjeto(); else if (t === 'amigo') salvarAmigo(); else if (t === 'emprestimo') salvarEmprestimo();
+  else if (t === 'renovar') salvarRenovacao(); else if (t === 'prazo') salvarPrazo(); else if (t === 'devolucao') salvarDevolucao();
+  else if (t === 'desfecho') salvarDesfecho(); else if (t === 'contestacao') salvarContestacao(); else salvarBloqueio();
+}
+
+var ACOES = {
+  data: function (el) { mudarData(el.dataset.delta); },
+  nav: function (el) { irPara(el.dataset.tela); },
+  novo: function () { if (ui.tela === 'emprestimos') novoEmprestimo(); else if (ui.tela === 'objetos') novoObjeto(); else if (ui.tela === 'amigos') novoAmigo(); },
+  filtro: function (el) { ui.filtro = ui.filtro === el.dataset.filtro ? 'padrao' : el.dataset.filtro; renderLista(true); },   // RD29
+  arquivados: function () { var k = ui.tela; ui.arquivados[k] = !ui.arquivados[k]; renderLista(false); },
+  'abrir-emp': function (el) { abrirFicha('emprestimo', el.dataset.id, el.closest('#painel') && ui.sel ? { tipo: ui.sel.tipo, id: ui.sel.id } : null); },   // vindo de um histórico, "Voltar" retorna a ele
+  'abrir-obj': function (el) { abrirFicha('objeto', el.dataset.id, el.dataset.de ? { tipo: 'emprestimo', id: el.dataset.de } : null); },
+  'abrir-ami': function (el) { abrirFicha('amigo', el.dataset.id, el.dataset.de ? { tipo: 'emprestimo', id: el.dataset.de } : null); },
+  voltar: function () { var v = ui.voltar; if (v) abrirFicha(v.tipo, v.id); },
+  fechar: function () { pedirFechamento(); },
+  'fechar-painel': function () { pedirFechamento(); },
+  mais: function () { ui.mais = !ui.mais; renderPainel(); },
+  detalhes: function () { ui.detalhes = !ui.detalhes; renderPainel(); },
+  devolver: function () { abrirDevolucao(ui.sel.id); },
+  renovar: function () { abrirRenovar(ui.sel.id); },
+  'definir-prazo': function () { abrirDefinirPrazo(ui.sel.id); },
+  perder: function () { marcarPerda(ui.sel.id); },
+  silenciar: function () { alternarSilencio(ui.sel.id, true); },
+  reativar: function () { alternarSilencio(ui.sel.id, false); },
+  'excluir-emp': function () { excluirEmprestimo(ui.sel.id); },
+  desfecho: function () { abrirDesfecho(ui.sel.id); },
+  contestar: function () { abrirContestacao(ui.sel.id); },
+  'editar-obj': function () { editarObjeto(ui.sel.id); },
+  'arquivar-obj': function () { arquivar('objeto', ui.sel.id, true); },
+  'desarquivar-obj': function () { arquivar('objeto', ui.sel.id, false); },
+  'excluir-obj': function () { excluirCadastro('objeto', ui.sel.id); },
+  'editar-ami': function () { editarAmigo(ui.sel.id); },
+  bloquear: function () { abrirBloqueio(ui.sel.id, false); },
+  desbloquear: function () { desbloquear(ui.sel.id); },
+  'editar-motivo': function () { abrirBloqueio(ui.sel.id, true); },
+  'arquivar-ami': function () { arquivar('amigo', ui.sel.id, true); },
+  'desarquivar-ami': function () { arquivar('amigo', ui.sel.id, false); },
+  'remover-dados': function () { removerDados(ui.sel.id); },
+  'excluir-ami': function () { excluirCadastro('amigo', ui.sel.id); },
+  salvar: function () { salvarForm(); },
+  cancelar: function () { tentarFecharForm(); },
+  escolher: function (el) { var f = ui.form; f.dados[el.dataset.campo] = el.dataset.valor; f.sujo = true; delete f.erros[el.dataset.campo]; renderPainel(); },
+  'emp-objeto': function (el) { escolherObjetoDoEmprestimo(el.dataset.id); },
+  'emp-amigo': function (el) { escolherAmigoDoEmprestimo(el.dataset.id); },
+  'emp-voltar': function () { ui.form.passo = ui.form.passo - 1; renderPainel(); },
+  'remover-foto': function (el) { ui.form.dados[el.dataset.campo] = null; ui.form.sujo = true; renderPainel(); },
+  negadas: function () { estado.avisosNegados = !estado.avisosNegados; salvar(); renderLista(false); },   // RD48
+  restaurar: function () { restaurarExemplo(); }
+};
+
+document.addEventListener('click', function (e) {
+  var el = e.target.closest('[data-acao]');
+  if (!el || el.disabled) return;
+  if (el.tagName === 'LABEL') return;
+  var fn = ACOES[el.dataset.acao];
+  if (fn) fn(el);
+});
+document.addEventListener('keydown', function (e) {
+  if (e.key === 'Escape') {                                    // RD21, RD22
+    if (dialogoAberto()) { var c = dialogoCancelar; fecharDialogo(); if (c) c(); return; }
+    if (ui.form || ui.sel) pedirFechamento();
+    return;
+  }
+  if (e.key === 'Tab' && dialogoAberto()) {                    // RD22: o foco fica preso no diálogo
+    var bs = $('dlg-botoes').querySelectorAll('button'), primeiro = bs[0], ultimo = bs[bs.length - 1];
+    if (e.shiftKey && document.activeElement === primeiro) { e.preventDefault(); ultimo.focus(); }
+    else if (!e.shiftKey && document.activeElement === ultimo) { e.preventDefault(); primeiro.focus(); }
+    return;
+  }
+  var alvo = e.target;
+  if ((e.key === 'Enter' || e.key === ' ') && alvo.getAttribute && alvo.getAttribute('role') === 'button' && alvo.dataset.acao) {   // RD11
+    e.preventDefault(); alvo.click();
+  }
+});
+// campos de texto: guardam o valor sem redesenhar (o foco não se perde)
+document.addEventListener('input', function (e) {
+  var t = e.target, f = ui.form;
+  if (!f || !t.dataset || !t.dataset.campo || t.dataset.valor !== undefined) return;
+  f.dados[t.dataset.campo] = t.value; f.sujo = true;
+  if (f.erros[t.dataset.campo]) { delete f.erros[t.dataset.campo]; t.removeAttribute('aria-invalid'); var er = document.getElementById('e-' + t.dataset.campo); if (er) er.remove(); }
+  atualizarPrevia();
+});
+document.addEventListener('change', function (e) {
+  var t = e.target, f = ui.form;
+  if (t.dataset && t.dataset.foto && f) { escolherFoto(t); return; }
+  if (!f || !t.dataset || !t.dataset.campo) return;
+  f.dados[t.dataset.campo] = t.value; f.sujo = true; delete f.erros[t.dataset.campo];
+  if (f.tipo === 'emprestimo' && t.dataset.campo === 'saida') {   // RN16: mudar a saída recalcula (modo dias) ou mantém / apaga (modo data)
+    var d = f.dados, saida = dataValida(d.saida) ? d.saida : hoje();
+    if (d.modo === 'Escolher data' && d.dataPrevista) {
+      var dif = diferencaDias(d.dataPrevista, saida);
+      if (dif < 1 || dif > 90 || diferencaDias(d.dataPrevista, hoje()) < 0) d.dataPrevista = '';
+    }
+    renderPainel();
+  }
+});
+// linha auxiliar "Data prevista: …" (LACUNA L17): atualizada sem redesenhar
+function atualizarPrevia() {
+  var f = ui.form, p = $('previa'); if (!p || !f) return;
+  var d = f.dados, dias, base, texto = '';
+  if (f.tipo === 'renovar') { dias = inteiroEntre(d.dias, 1, 30); base = buscar(estado.emprestimos, f.ctx.emprestimoId).data_prevista; if (dias) texto = 'Nova data prevista: ' + formatarData(somarDias(base, dias)); }
+  else if (f.tipo === 'prazo') { dias = inteiroEntre(d.dias, 1, 90); if (dias) texto = 'Data prevista: ' + formatarData(somarDias(hoje(), dias)); }
+  else if (f.tipo === 'emprestimo') { var pr = previstaDoFormulario(); if (pr) texto = 'Data prevista: ' + formatarData(pr); }
+  p.textContent = texto;
+}
+// RD37: arrastar a alça para fechar a folha (celular)
+var arrasto = null;
+document.addEventListener('pointerdown', function (e) {
+  if (!ehCelular() || !e.target.closest) return;
+  if (e.target.closest('.alca')) arrasto = { y: e.clientY, dy: 0 };
+});
+document.addEventListener('pointermove', function (e) {
+  if (!arrasto) return;
+  arrasto.dy = Math.max(0, e.clientY - arrasto.y);
+  $('painel').style.transition = 'none'; $('painel').style.transform = 'translateY(' + arrasto.dy + 'px)';
+});
+document.addEventListener('pointerup', function () {
+  if (!arrasto) return;
+  var p = $('painel'), fechar = arrasto.dy > 110;
+  arrasto = null; p.style.transition = ''; p.style.transform = '';
+  if (fechar) pedirFechamento();
+});
+window.addEventListener('resize', ajustarPicotes);
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(ajustarPicotes);
+
+// ---------- início ----------
+estado = carregar();
+if (!estado) { semear(); }
+atualizarEstados(); entregarAvisos(); salvar();   // RN22 e RN29: a cada abertura recalcula
+renderTudo(true);
+</script>
+</body>
+</html>
